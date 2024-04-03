@@ -18,7 +18,18 @@ var register_y int = 0
 var cpu_status Status
 var memory Memory
 
-func string_to_hex(str string) int {
+var head Program_Code
+
+func accumulator_add(val int) {
+	if accumulator+val > 255 {
+		accumulator += val - 256
+	} else {
+		accumulator += val
+	}
+
+}
+
+func string_to_int(str string) int {
 	split := strings.TrimPrefix(str, "#")
 	split = strings.TrimPrefix(split, "$")
 	split = strings.TrimLeft(split, "0")
@@ -44,23 +55,142 @@ func main() {
 	}
 	defer f.Close()
 	scanner := bufio.NewScanner(f)
+
+	var ptr *Program_Code
+	ptr = &head
+	index := 0
 	for scanner.Scan() {
 		curr_line := scanner.Text()
-		split_line := strings.Split(curr_line, " ")
-		switch split_line[0] {
-		case "LDA":
-			if strings.Contains(split_line[1], "#") {
-				LDA(string_to_hex(split_line[1]))
+		ptr.index = index
+		if strings.Contains(curr_line, ":") {
+			ptr.code_type = function_start
+			ptr.destination = strings.Split(curr_line, ":")[0]
+		} else {
+			split_line := strings.Split(curr_line, " ")
+			if _, err := strconv.Atoi(split_line[1]); err == nil {
+				input_addr_1 := string_to_int(split_line[1])
+				ptr.code_type = op_code
+				switch split_line[0] {
+				case "LDA":
+					ptr.op_code = LDA_cmd
+					if strings.Contains(split_line[1], "#") {
+						ptr.addr_mode = immediate_type
+						ptr.mem_1 = input_addr_1
+					}
+				case "STA":
+					ptr.op_code = STA_cmd
+					ptr.addr_mode = zero_page_type
+					ptr.mem_1 = input_addr_1
+				case "BRK":
+					ptr.op_code = BRK_cmd
+				case "TAX":
+					ptr.op_code = TAX_cmd
+				case "TAY":
+					ptr.op_code = TAY_cmd
+				case "TYA":
+					ptr.op_code = TYA_cmd
+				case "INX":
+					ptr.op_code = INX_cmd
+				case "INY":
+					ptr.op_code = INY_cmd
+				case "DEX":
+					ptr.op_code = DEX_cmd
+				case "DEY":
+					ptr.op_code = DEY_cmd
+				case "ADC":
+					ptr.op_code = ADC_cmd
+					if strings.Contains(split_line[1], "#") {
+						ptr.addr_mode = immediate_type
+						ptr.mem_1 = input_addr_1
+					} else {
+						ptr.addr_mode = zero_page_type
+						ptr.mem_1 = input_addr_1
+					}
+				case "STY":
+					//assuming zero page
+					ptr.addr_mode = zero_page_type
+					ptr.op_code = STY_cmd
+				case "STX":
+					//assuming zero page
+					ptr.addr_mode = zero_page_type
+					ptr.op_code = STX_cmd
+
+				}
+			} else {
+				switch split_line[0] {
+				case "BNE":
+					ptr.code_type = op_code
+					ptr.op_code = BNE_cmd
+					ptr.destination = split_line[0]
+				}
 			}
-		case "STA":
-			STA(memory.zero_page_addr(string_to_hex(split_line[1])))
 		}
+		ptr = ptr.next
 	}
+
+	run_program()
 
 	dump_contents()
 
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
+	}
+}
+
+func run_program() {
+	var ptr *Program_Code
+	ptr = &head
+	for ptr.next != nil {
+		switch ptr.op_code {
+		case LDA_cmd:
+			if ptr.addr_mode == immediate_type {
+				LDA(ptr.mem_1)
+			}
+		case STA_cmd:
+			STA(memory.zero_page_addr(ptr.mem_1))
+		case BRK_cmd:
+			dump_contents()
+			os.Exit(0)
+		case TAX_cmd:
+			TAX()
+		case TAY_cmd:
+			TAY()
+		case TYA_cmd:
+			TYA()
+		case INX_cmd:
+			INX()
+		case INY_cmd:
+			INY()
+		case DEX_cmd:
+			DEX()
+		case DEY_cmd:
+			DEY()
+		case STX_cmd:
+			if ptr.addr_mode == zero_page_type {
+				STX(memory.zero_page_addr(ptr.mem_1))
+			}
+		case STY_cmd:
+			if ptr.addr_mode == zero_page_type {
+				STY(memory.zero_page_addr(ptr.mem_1))
+			}
+		case ADC_cmd:
+			if ptr.addr_mode == immediate_type {
+				ADC(ptr.mem_1)
+			} else if ptr.addr_mode == zero_page_type {
+				ADC(*memory.zero_page_addr(ptr.mem_1))
+			}
+		case BNE_cmd:
+			if !cpu_status.zero_flag {
+				var local_ptr = &head
+				for local_ptr.next != nil {
+					if local_ptr.next.code_type == function_start && local_ptr.destination == ptr.destination {
+						ptr = local_ptr
+						break
+					}
+				}
+			}
+		}
+		ptr = ptr.next
 	}
 }
 
@@ -86,40 +216,37 @@ func STA(val *int) {
 	*val = accumulator
 }
 
-// func STX(mem_addr int) {
-// 	memory[mem_addr] = register_x
-// }
+func STX(mem_addr *int) {
+	*mem_addr = register_x
+}
 
-// func STY(mem_addr int) {
-// 	memory[mem_addr] = register_y
-// }
+func STY(mem_addr *int) {
+	*mem_addr = register_y
+}
 
-// func TAX() {
-// 	register_x = accumulator
-// 	cpu_status.zero_flag = register_x == 0
-// 	cpu_status.negative_flag = register_x&0b10000000 != 0
+func TAX() {
+	register_x = accumulator
+	cpu_status.zero_flag = register_x == 0
+	cpu_status.negative_flag = register_x&0b10000000 != 0
+}
 
-// }
+func TAY() {
+	register_y = accumulator
+	cpu_status.zero_flag = register_y == 0
+	cpu_status.negative_flag = register_x&0b10000000 != 0
+}
 
-// func TAY() {
-// 	register_y = accumulator
-// 	cpu_status.zero_flag = register_y == 0
-// 	cpu_status.negative_flag = register_x&0b10000000 != 0
+func TXA() {
+	accumulator = register_x
+	cpu_status.zero_flag = accumulator == 0
+	cpu_status.negative_flag = accumulator&0b10000000 != 0
+}
 
-// }
-
-// func TXA() {
-// 	accumulator = register_x
-// 	cpu_status.zero_flag = accumulator == 0
-// 	cpu_status.negative_flag = accumulator&0b10000000 != 0
-// }
-
-// func TYA() {
-// 	accumulator = register_y
-// 	cpu_status.zero_flag = accumulator == 0
-// 	cpu_status.negative_flag = accumulator&0b10000000 != 0
-
-// }
+func TYA() {
+	accumulator = register_y
+	cpu_status.zero_flag = accumulator == 0
+	cpu_status.negative_flag = accumulator&0b10000000 != 0
+}
 
 // func TSX() {
 // 	register_x = memory[stack_pointer]
@@ -188,17 +315,17 @@ func STA(val *int) {
 // 	cpu_status.negative_flag = memory[mem_addr]&0b10000000 != 0
 // }
 
-// func INX() {
-// 	register_x++
-// 	cpu_status.zero_flag = register_x == 0
-// 	cpu_status.negative_flag = register_x&0b10000000 != 0
-// }
+func INX() {
+	register_x++
+	cpu_status.zero_flag = register_x == 0
+	cpu_status.negative_flag = register_x&0b10000000 != 0
+}
 
-// func INY() {
-// 	register_y++
-// 	cpu_status.zero_flag = register_y == 0
-// 	cpu_status.negative_flag = register_y&0b10000000 != 0
-// }
+func INY() {
+	register_y++
+	cpu_status.zero_flag = register_y == 0
+	cpu_status.negative_flag = register_y&0b10000000 != 0
+}
 
 // func DEC(mem_addr int) {
 // 	memory[mem_addr]--
@@ -206,17 +333,17 @@ func STA(val *int) {
 // 	cpu_status.negative_flag = memory[mem_addr]&0b10000000 != 0
 // }
 
-// func DEX() {
-// 	register_x++
-// 	cpu_status.zero_flag = register_x == 0
-// 	cpu_status.negative_flag = register_x&0b10000000 != 0
-// }
+func DEX() {
+	register_x++
+	cpu_status.zero_flag = register_x == 0
+	cpu_status.negative_flag = register_x&0b10000000 != 0
+}
 
-// func DEY() {
-// 	register_y++
-// 	cpu_status.zero_flag = register_y == 0
-// 	cpu_status.negative_flag = register_y&0b10000000 != 0
-// }
+func DEY() {
+	register_y++
+	cpu_status.zero_flag = register_y == 0
+	cpu_status.negative_flag = register_y&0b10000000 != 0
+}
 
 // // supposed to be mem address or accum?
 // func ASL() {
@@ -283,6 +410,28 @@ func STA(val *int) {
 // 	cpu_status.interrupt_disable = true
 // }
 
+func ADC(val int) {
+	if cpu_status.carry_flag {
+		accumulator_add(val + 1)
+	} else {
+		accumulator_add(val)
+	}
+	cpu_status.carry_flag = accumulator&0b100000000 != 0
+	cpu_status.zero_flag = accumulator == 0
+	cpu_status.negative_flag = accumulator&0b10000000 != 0
+}
+
+func SBC(val int) {
+	if !cpu_status.carry_flag {
+		accumulator_add(-(val + 1))
+	} else {
+		accumulator_add(-val)
+	}
+	cpu_status.carry_flag = accumulator&0b100000000 != 0
+	cpu_status.zero_flag = accumulator == 0
+	cpu_status.negative_flag = accumulator&0b10000000 != 0
+}
+
 func dump_contents() {
 	fmt.Println("Accumulator:", accumulator)
 	fmt.Println("X Register:", register_x)
@@ -290,7 +439,7 @@ func dump_contents() {
 	fmt.Println("Stack Pointer:", stack_pointer)
 	fmt.Println("Program Counter:", program_counter)
 
-	fmt.Println("Zero Page:\n")
+	fmt.Println("\nZero Page:")
 	for i := 0; i < 16; i++ {
 		fmt.Print(i, ": ")
 		for j := 0; j < 16; j++ {
