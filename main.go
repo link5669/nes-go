@@ -1,10 +1,13 @@
+// https://skilldrick.github.io/easy6502/ -- use for testing!
 package main
 
 import (
+	"bufio"
 	"fmt"
-	"io"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 )
 
 var program_counter int = 0
@@ -13,6 +16,26 @@ var accumulator int = 0
 var register_x int = 0
 var register_y int = 0
 var cpu_status Status
+var memory Memory
+
+func string_to_hex(str string) int {
+	split := strings.TrimPrefix(str, "#")
+	split = strings.TrimPrefix(split, "$")
+	split = strings.TrimLeft(split, "0")
+	if len(split) > 1 {
+		value, err := strconv.ParseInt(split, 16, 64)
+		if err != nil {
+			fmt.Printf("Conversion failed: %s\n", err)
+		} else {
+			return int(value)
+		}
+	}
+	val, er := strconv.Atoi(split)
+	if er != nil {
+		fmt.Printf("Conversion failed: %s\n", er)
+	}
+	return int(val)
+}
 
 func main() {
 	f, err := os.Open("test.asm")
@@ -20,43 +43,48 @@ func main() {
 		log.Fatalf("unable to read file: %v", err)
 	}
 	defer f.Close()
-	buf := make([]byte, 1024)
-	for {
-		n, err := f.Read(buf)
-		if err == io.EOF {
-			break
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		curr_line := scanner.Text()
+		split_line := strings.Split(curr_line, " ")
+		switch split_line[0] {
+		case "LDA":
+			if strings.Contains(split_line[1], "#") {
+				LDA(string_to_hex(split_line[1]))
+			}
+		case "STA":
+			STA(memory.zero_page_addr(string_to_hex(split_line[1])))
 		}
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-		if n > 0 {
-			fmt.Println(string(buf[:n]))
-		}
+	}
+
+	dump_contents()
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
 	}
 }
 
-// func load(mem_addr int, desti *int) {
-// 	*desti = memory[mem_addr]
-// 	cpu_status.zero_flag = *desti == 0
-// 	cpu_status.negative_flag = accumulator&0b10000000 != 00
-// }
+func load(val int, desti *int) {
+	*desti = val
+	cpu_status.zero_flag = *desti == 0
+	cpu_status.negative_flag = accumulator&0b10000000 != 00
+}
 
-// func LDA(mem_addr int) {
-// 	load(mem_addr, &accumulator)
-// }
+func LDA(mem_addr int) {
+	load(mem_addr, &accumulator)
+}
 
-// func LDX(mem_addr int) {
-// 	load(mem_addr, &register_x)
-// }
+func LDX(mem_addr int) {
+	load(mem_addr, &register_x)
+}
 
-// func LDY(mem_addr int) {
-// 	load(mem_addr, &register_y)
-// }
+func LDY(mem_addr int) {
+	load(mem_addr, &register_y)
+}
 
-// func STA(mem_addr int) {
-// 	memory[mem_addr] = accumulator
-// }
+func STA(val *int) {
+	*val = accumulator
+}
 
 // func STX(mem_addr int) {
 // 	memory[mem_addr] = register_x
@@ -254,3 +282,20 @@ func main() {
 // func SEI() {
 // 	cpu_status.interrupt_disable = true
 // }
+
+func dump_contents() {
+	fmt.Println("Accumulator:", accumulator)
+	fmt.Println("X Register:", register_x)
+	fmt.Println("Y Register:", register_y)
+	fmt.Println("Stack Pointer:", stack_pointer)
+	fmt.Println("Program Counter:", program_counter)
+
+	fmt.Println("Zero Page:\n")
+	for i := 0; i < 16; i++ {
+		fmt.Print(i, ": ")
+		for j := 0; j < 16; j++ {
+			fmt.Print(memory.zero_page[i*16+j])
+		}
+		fmt.Print("\n")
+	}
+}

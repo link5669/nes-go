@@ -1,46 +1,50 @@
 package main
 
 type Memory struct {
-	zero_page         [256]byte
-	system_stack      [256]byte
-	interrupt_handler [2]byte
-	power_reset       [2]byte
-	interrput_reset   [2]byte
+	zero_page         [256]int
+	system_stack      [256]int
+	interrupt_handler [2]int
+	power_reset       [2]int
+	interrupt_reset   [2]int
 }
 
-func zero_page(mem_addr int, memory Memory) byte {
-	return memory.zero_page[mem_addr]
+func (m *Memory) immediate_addr(mem_addr int) *int {
+	return &m.zero_page[mem_addr]
 }
 
-func zero_page_x(mem_addr int, memory Memory) byte {
-	return memory.zero_page[mem_addr+register_x]
+func (m *Memory) zero_page_addr(mem_addr int) *int {
+	return &(m.zero_page[mem_addr])
 }
 
-func zero_page_y(mem_addr int, memory Memory) byte {
-	return memory.zero_page[mem_addr+register_y]
+func (m *Memory) zero_page_x_addr(mem_addr int) *int {
+	return &m.zero_page[mem_addr+register_x]
 }
 
-func absolute(mem_addr int, memory Memory) int {
+func (m *Memory) zero_page_y_addr(mem_addr int) *int {
+	return &m.zero_page[mem_addr+register_y]
+}
+
+func (m *Memory) absolute_addr(mem_addr int) *int {
 	if mem_addr < 255 {
-		return int(memory.zero_page[mem_addr])
+		return &m.zero_page[mem_addr]
 	} else {
-		return int(memory.system_stack[mem_addr-255])
+		return &m.system_stack[mem_addr-255]
 	}
 }
 
-func absolute_x(mem_addr int, memory Memory) int {
+func (m *Memory) absolute_x_addr(mem_addr int) *int {
 	if mem_addr < 255 {
-		return int(memory.zero_page[mem_addr+register_x])
+		return &m.zero_page[mem_addr+register_x]
 	} else {
-		return int(memory.system_stack[mem_addr-255+register_x])
+		return &m.system_stack[mem_addr-255+register_x]
 	}
 }
 
-func indexed_indirect(memory Memory, ptr *int, offset int) int {
-	return int(memory.zero_page[*ptr+offset])
+func (m *Memory) indexed_indirect_addr(ptr *int, offset int) *int {
+	return &m.zero_page[*ptr+offset]
 }
 
 // ADD zero page wraparount
-func indirect_indexed(memory Memory, ptr *int, offset int) int {
-	return (offset << 4) & *ptr
-}
+// func (m *Memory) indirect_indexed_addr(ptr *int, offset int) *int {
+// 	return (offset << 4) & *ptr
+// }
