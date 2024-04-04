@@ -1,18 +1,14 @@
 package main
 
 type Program_Code struct {
-	code_type   int
+	code_type   code_type
 	op_code     Op_Code
 	index       int
 	next        *Program_Code
-	addr_mode   int
+	addr_mode   addr_mode
 	mem_1       int
 	destination string
 }
-
-type Op_Code int
-
-type code_type int
 
 type addr_mode int
 
@@ -32,10 +28,14 @@ const (
 	indirect_indexed_type
 )
 
+type code_type int
+
 const (
-	function_start = iota
+	function_definition = iota
 	op_code
 )
+
+type Op_Code int
 
 const (
 	ADC_cmd = iota

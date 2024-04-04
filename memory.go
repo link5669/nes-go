@@ -9,23 +9,37 @@ type Memory struct {
 }
 
 func (m *Memory) immediate_addr(mem_addr int) *int {
+	if mem_addr > 255 {
+		return m.immediate_addr(mem_addr - 256)
+	}
 	return &m.zero_page[mem_addr]
 }
 
 func (m *Memory) zero_page_addr(mem_addr int) *int {
-	return &(m.zero_page[mem_addr])
+	if mem_addr > 255 {
+		return m.zero_page_addr(mem_addr - 256)
+	}
+	return &m.zero_page[mem_addr]
 }
 
 func (m *Memory) zero_page_x_addr(mem_addr int) *int {
+	if mem_addr+register_x > 255 {
+		return m.zero_page_x_addr(mem_addr - 256)
+	}
 	return &m.zero_page[mem_addr+register_x]
 }
 
 func (m *Memory) zero_page_y_addr(mem_addr int) *int {
+	if mem_addr+register_y > 255 {
+		return m.zero_page_y_addr(mem_addr - 256)
+	}
 	return &m.zero_page[mem_addr+register_y]
 }
 
 func (m *Memory) absolute_addr(mem_addr int) *int {
-	if mem_addr < 255 {
+	if mem_addr > 511 {
+		return m.absolute_addr(mem_addr - 512)
+	} else if mem_addr < 255 {
 		return &m.zero_page[mem_addr]
 	} else {
 		return &m.system_stack[mem_addr-255]
@@ -33,7 +47,9 @@ func (m *Memory) absolute_addr(mem_addr int) *int {
 }
 
 func (m *Memory) absolute_x_addr(mem_addr int) *int {
-	if mem_addr < 255 {
+	if mem_addr > 511 {
+		return m.absolute_x_addr(mem_addr - 512)
+	} else if mem_addr < 255 {
 		return &m.zero_page[mem_addr+register_x]
 	} else {
 		return &m.system_stack[mem_addr-255+register_x]
