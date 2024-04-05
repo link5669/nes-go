@@ -10,13 +10,15 @@ import (
 	"strings"
 )
 
-var program_counter int = 0
-var stack_pointer int = 0
+var program_counter int = 1536
+var stack_pointer int = 255
 var accumulator int = 0
 var register_x int = 0
 var register_y int = 0
 var cpu_status Status
 var memory Memory
+
+var const_head Const = Const{}
 
 var head Program_Code = Program_Code{}
 
@@ -48,6 +50,17 @@ func string_to_int(str string) int {
 	return int(val)
 }
 
+func split(val string, char string) []string {
+	split_val := strings.Split(val, char)
+	ret_val := []string{}
+	for i := 0; i < len(split_val); i++ {
+		if !(split_val[i] == "" || split_val[i] == " ") {
+			ret_val = append(ret_val, split_val[i])
+		}
+	}
+	return ret_val
+}
+
 func main() {
 	f, err := os.Open("test.asm")
 	if err != nil {
@@ -58,59 +71,120 @@ func main() {
 
 	var ptr *Program_Code
 	ptr = &head
+	var var_ptr *Const
+	var_ptr = &const_head
 	index := 0
 	for scanner.Scan() {
 		curr_line := scanner.Text()
+		if strings.Contains(curr_line, "inc") {
+			println("akl")
+		}
+		if curr_line == "" || curr_line == " " || curr_line == "  " {
+			continue
+		} else if strings.Contains(curr_line, "define") {
+			split_line := split(curr_line, " ")
+			var_ptr.name = split_line[1]
+			var_ptr.val = split_line[2]
+			var_ptr.next = &Const{}
+			var_ptr = var_ptr.next
+			continue
+		}
 		curr_line = strings.TrimLeft(curr_line, " ")
 		ptr.index = index
+		program_counter++
 		if strings.Contains(curr_line, ":") {
 			ptr.code_type = function_definition
-			ptr.destination = strings.Split(curr_line, ":")[0]
+			ptr.destination = split(curr_line, ":")[0]
 		} else {
 			ptr.code_type = op_code
-			split_line := strings.Split(curr_line, " ")
+			split_line := split(curr_line, " ")
+			split_line[0] = strings.ToUpper(split_line[0])
 			if len(split_line) > 1 {
-				if strings.Contains(split_line[1], "$") {
-					split_addr_1 := strings.Split(split_line[1], ",")
+				if !strings.Contains(split_line[1], "$") {
+					var local_ptr = &const_head
+					for local_ptr.next != nil {
+						split_line[1] = strings.Replace(split_line[1], local_ptr.name, local_ptr.val, 1)
+						local_ptr = local_ptr.next
+					}
+				}
+				if strings.Contains(split_line[1], "$") || strings.Contains(split_line[1], "#") {
+					split_addr_1 := split(split_line[1], ",")
 					var input_addr_1 int
 					if strings.Contains(split_line[1], "#") {
 						ptr.addr_mode = immediate_type
 						input_addr_1 = string_to_int(split_line[1])
-					} else if len(split_addr_1) > 1 {
+					} else if len(split_addr_1) > 1 && !strings.Contains(split_line[1], "(") {
 						input_addr_1 = string_to_int(split_addr_1[0])
 						if split_addr_1[1] == "Y" {
-							if len(strings.Split(split_addr_1[0], "")) == 4 {
+							if len(split(split_addr_1[0], "")) == 5 {
 								ptr.addr_mode = absolute_y_type
 							} else {
 								ptr.addr_mode = zero_page_y_type
 							}
 						} else if split_addr_1[1] == "X" {
-							if len(strings.Split(split_addr_1[0], "")) == 4 {
+							if len(split(split_addr_1[0], "")) == 5 {
 								ptr.addr_mode = absolute_x_type
 							} else {
 								ptr.addr_mode = zero_page_x_type
 							}
 						}
 					} else {
-						input_addr_1 = string_to_int(split_line[1])
-						if len(strings.Split(split_addr_1[0], "")) == 5 {
-							ptr.addr_mode = absolute_type
+						if !strings.Contains(split_line[1], "(") {
+							input_addr_1 = string_to_int(split_line[1])
+							if len(split(split_addr_1[0], "")) == 5 {
+								ptr.addr_mode = absolute_type
+							} else {
+								ptr.addr_mode = zero_page_type
+							}
 						} else {
-							ptr.addr_mode = zero_page_type
+							addr := strings.TrimLeft(split_line[1], "(")
+							splita := split(addr, "")
+							if splita[len(splita)-1] == ")" {
+								ptr.addr_mode = indexed_indirect_type
+								addr = split(addr, ",")[0]
+								input_addr_1 = string_to_int(addr)
+							} else {
+								addr = split(addr, ",")[0]
+								addr = strings.TrimRight(addr, ")")
+								input_addr_1 = string_to_int(addr)
+								ptr.addr_mode = indirect_indexed_type
+							}
 						}
 					}
+
 					switch split_line[0] {
+					case "LSR":
+						ptr.op_code = LSR_cmd
+						ptr.mem_1 = input_addr_1
+					case "AND":
+						ptr.op_code = AND_cmd
+						ptr.mem_1 = input_addr_1
+					case "DEC":
+						ptr.op_code = DEC_cmd
+						ptr.mem_1 = input_addr_1
 					case "LDX":
 						ptr.op_code = LDX_cmd
 						ptr.mem_1 = input_addr_1
+					case "LDY":
+						ptr.op_code = LDY_cmd
+						ptr.mem_1 = input_addr_1
 					case "LDA":
 						ptr.op_code = LDA_cmd
+						ptr.mem_1 = input_addr_1
+					case "BIT":
+						ptr.op_code = BIT_cmd
+						ptr.mem_1 = input_addr_1
+					case "SBC":
+						ptr.op_code = SBC_cmd
 						ptr.mem_1 = input_addr_1
 					case "STA":
 						ptr.op_code = STA_cmd
 						ptr.mem_1 = input_addr_1
 					case "ADC":
 						ptr.op_code = ADC_cmd
+						ptr.mem_1 = input_addr_1
+					case "INC":
+						ptr.op_code = INC_cmd
 						ptr.mem_1 = input_addr_1
 					case "STY":
 						ptr.op_code = STY_cmd
@@ -124,18 +198,66 @@ func main() {
 					case "CMP":
 						ptr.op_code = CMP_cmd
 						ptr.mem_1 = input_addr_1
+					case "CPY":
+						ptr.op_code = CPY_cmd
+						ptr.mem_1 = input_addr_1
+					case "JMP":
+						//copied from below!
+						ptr.op_code = JMP_cmd
+						if strings.Contains(split_line[1], "(") {
+							ptr.addr_mode = indirect_type
+							addr := strings.TrimLeft(split_line[1], "(")
+							addr = strings.TrimRight(addr, ")")
+							ptr.destination = addr
+						} else {
+							ptr.addr_mode = absolute_type
+							ptr.destination = split_line[1]
+						}
 					}
 				} else {
+					ptr.code_type = op_code
 					switch split_line[0] {
 					case "BNE":
-						ptr.code_type = op_code
 						ptr.op_code = BNE_cmd
 						ptr.destination = split_line[1]
+					case "BEQ":
+						ptr.op_code = BEQ_cmd
+						ptr.destination = split_line[1]
+					case "BCS":
+						ptr.op_code = BCS_cmd
+						ptr.destination = split_line[1]
+					case "BCC":
+						ptr.op_code = BCC_cmd
+						ptr.destination = split_line[1]
+					case "BPL":
+						ptr.op_code = BPL_cmd
+						ptr.destination = split_line[1]
+					case "JSR":
+						ptr.op_code = JSR_cmd
+						ptr.addr_mode = absolute_type
+						ptr.destination = split_line[1]
+					case "JMP":
+						//copied from above!
+						ptr.op_code = JMP_cmd
+						if strings.Contains(split_line[1], "(") {
+							ptr.addr_mode = indirect_type
+							addr := strings.TrimLeft(split_line[1], "(")
+							addr = strings.TrimRight(addr, ")")
+							ptr.destination = addr
+						} else {
+							ptr.addr_mode = absolute_type
+							ptr.destination = split_line[1]
+						}
 					}
 				}
 			} else {
-				split_line := strings.Split(curr_line, " ")
+				split_line := split(curr_line, " ")
+				split_line[0] = strings.ToUpper(split_line[0])
 				switch split_line[0] {
+				case "LSR":
+					ptr.op_code = LSR_cmd
+				case "RTS":
+					ptr.op_code = RTS_cmd
 				case "BRK":
 					ptr.op_code = BRK_cmd
 				case "TAX":
@@ -166,6 +288,18 @@ func main() {
 					ptr.op_code = CLI_cmd
 				case "CLV":
 					ptr.op_code = CLV_cmd
+				case "PLA":
+					ptr.op_code = PLA_cmd
+				case "PHA":
+					ptr.op_code = PHA_cmd
+				case "TXS":
+					ptr.op_code = TXS_cmd
+				case "TSX":
+					ptr.op_code = TSX_cmd
+				case "TXA":
+					ptr.op_code = TXA_cmd
+				case "NOP":
+					ptr.op_code = NOP_cmd
 				}
 			}
 		}
@@ -190,13 +324,91 @@ func run_program() {
 			//TODO
 		} else {
 			switch ptr.op_code {
+			case DEC_cmd:
+				if ptr.addr_mode == zero_page_type {
+					DEC(memory.zero_page_addr(ptr.mem_1))
+				} else if ptr.addr_mode == zero_page_x_type {
+					DEC(memory.zero_page_x_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_type {
+					DEC(memory.absolute_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_x_type {
+					DEC(memory.absolute_x_addr(ptr.mem_1))
+				}
+			case BIT_cmd:
+				if ptr.addr_mode == zero_page_type {
+					BIT(*memory.zero_page_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_type {
+					BIT(*memory.absolute_addr(ptr.mem_1))
+				}
+			case INC_cmd:
+				if ptr.addr_mode == zero_page_type {
+					INC(memory.zero_page_addr(ptr.mem_1))
+				} else if ptr.addr_mode == zero_page_x_type {
+					INC(memory.zero_page_x_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_type {
+					INC(memory.absolute_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_x_type {
+					INC(memory.absolute_x_addr(ptr.mem_1))
+				}
 			case LDA_cmd:
 				if ptr.addr_mode == immediate_type {
 					LDA(ptr.mem_1)
+				} else if ptr.addr_mode == zero_page_type {
+					LDA(*memory.zero_page_addr(ptr.mem_1))
+				} else if ptr.addr_mode == zero_page_x_type {
+					LDA(*memory.zero_page_x_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_type {
+					LDA(*memory.absolute_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_x_type {
+					LDA(*memory.absolute_x_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_y_type {
+					LDA(*memory.absolute_y_addr(ptr.mem_1))
+				} else if ptr.addr_mode == indexed_indirect_type {
+					LDA(*memory.indexed_indirect_addr(ptr.mem_1))
+				} else if ptr.addr_mode == indirect_indexed_type {
+					LDA(*memory.indirect_indexed_addr(ptr.mem_1))
+				}
+			case SBC_cmd:
+				if ptr.addr_mode == immediate_type {
+					SBC(ptr.mem_1)
+				} else if ptr.addr_mode == zero_page_type {
+					SBC(*memory.zero_page_addr(ptr.mem_1))
+				} else if ptr.addr_mode == zero_page_x_type {
+					SBC(*memory.zero_page_x_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_type {
+					SBC(*memory.absolute_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_x_type {
+					SBC(*memory.absolute_x_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_y_type {
+					SBC(*memory.absolute_y_addr(ptr.mem_1))
+				} else if ptr.addr_mode == indexed_indirect_type {
+					SBC(*memory.indexed_indirect_addr(ptr.mem_1))
+				} else if ptr.addr_mode == indirect_indexed_type {
+					SBC(*memory.indirect_indexed_addr(ptr.mem_1))
 				}
 			case LDX_cmd:
 				if ptr.addr_mode == immediate_type {
 					LDX(ptr.mem_1)
+				} else if ptr.addr_mode == zero_page_type {
+					LDX(*memory.zero_page_addr(ptr.mem_1))
+				} else if ptr.addr_mode == zero_page_y_type {
+					LDX(*memory.zero_page_y_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_type {
+					LDX(*memory.absolute_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_y_type {
+					LDX(*memory.absolute_y_addr(ptr.mem_1))
+				}
+			case LDY_cmd:
+				if ptr.addr_mode == immediate_type {
+					LDY(ptr.mem_1)
+				} else if ptr.addr_mode == zero_page_type {
+					LDY(*memory.zero_page_addr(ptr.mem_1))
+				} else if ptr.addr_mode == zero_page_x_type {
+					LDY(*memory.zero_page_x_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_type {
+					LDY(*memory.absolute_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_x_type {
+					LDY(*memory.absolute_x_addr(ptr.mem_1))
 				}
 			case CPX_cmd:
 				if ptr.addr_mode == immediate_type {
@@ -205,6 +417,10 @@ func run_program() {
 			case CMP_cmd:
 				if ptr.addr_mode == immediate_type {
 					CMP(ptr.mem_1)
+				}
+			case CPY_cmd:
+				if ptr.addr_mode == immediate_type {
+					CPY(ptr.mem_1)
 				}
 			case STA_cmd:
 				if ptr.addr_mode == zero_page_type {
@@ -215,10 +431,48 @@ func run_program() {
 					STA(memory.zero_page_y_addr(ptr.mem_1))
 				} else if ptr.addr_mode == absolute_type {
 					STA(memory.absolute_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_x_type {
+					STA(memory.absolute_x_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_y_type {
+					STA(memory.absolute_y_addr(ptr.mem_1))
+				} else if ptr.addr_mode == indexed_indirect_type {
+					STA(memory.indexed_indirect_addr(ptr.mem_1))
+				} else if ptr.addr_mode == indirect_indexed_type {
+					STA(memory.indirect_indexed_addr(ptr.mem_1))
+				}
+			case AND_cmd:
+				if ptr.addr_mode == zero_page_type {
+					AND(*memory.zero_page_addr(ptr.mem_1))
+				} else if ptr.addr_mode == zero_page_x_type {
+					AND(*memory.zero_page_x_addr(ptr.mem_1))
+				} else if ptr.addr_mode == zero_page_y_type {
+					AND(*memory.zero_page_y_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_type {
+					AND(*memory.absolute_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_x_type {
+					AND(*memory.absolute_x_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_y_type {
+					AND(*memory.absolute_y_addr(ptr.mem_1))
+				} else if ptr.addr_mode == indexed_indirect_type {
+					AND(*memory.indexed_indirect_addr(ptr.mem_1))
+				} else if ptr.addr_mode == indirect_indexed_type {
+					AND(*memory.indirect_indexed_addr(ptr.mem_1))
+				}
+			case LSR_cmd:
+				if ptr.addr_mode == zero_page_type {
+					LSR(memory.zero_page_addr(ptr.mem_1))
+				} else if ptr.addr_mode == zero_page_x_type {
+					LSR(memory.zero_page_x_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_type {
+					LSR(memory.absolute_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_x_type {
+					LSR(memory.absolute_x_addr(ptr.mem_1))
+				} else {
+					LSR(nil)
 				}
 			case BRK_cmd:
-				// dump_contents()
-				// os.Exit(0)
+				dump_contents()
+				os.Exit(0)
 			case TAX_cmd:
 				TAX()
 			case TAY_cmd:
@@ -247,6 +501,18 @@ func run_program() {
 				CLI()
 			case CLV_cmd:
 				CLV()
+			case NOP_cmd:
+				println("nop!")
+			case PLA_cmd:
+				PLA()
+			case PHA_cmd:
+				PHA()
+			case TXS_cmd:
+				TXS()
+			case TSX_cmd:
+				TSX()
+			case TXA_cmd:
+				TXA()
 			case STX_cmd:
 				if ptr.addr_mode == zero_page_type {
 					STX(memory.zero_page_addr(ptr.mem_1))
@@ -268,11 +534,14 @@ func run_program() {
 					ADC(ptr.mem_1)
 				} else if ptr.addr_mode == zero_page_type {
 					ADC(*memory.zero_page_addr(ptr.mem_1))
+				} else if ptr.addr_mode == indexed_indirect_type {
+					ADC(*memory.indexed_indirect_addr(ptr.mem_1))
+				} else if ptr.addr_mode == indirect_indexed_type {
+					ADC(*memory.indirect_indexed_addr(ptr.mem_1))
 				}
 			case BNE_cmd:
 				if !cpu_status.zero_flag {
 					var local_ptr = &head
-					println(register_x)
 					for local_ptr.next != nil {
 						if local_ptr.destination == ptr.destination && local_ptr.code_type == function_definition {
 							ptr = local_ptr
@@ -280,6 +549,100 @@ func run_program() {
 						}
 						local_ptr = local_ptr.next
 					}
+				}
+			case BEQ_cmd:
+				if cpu_status.zero_flag {
+					var local_ptr = &head
+					for local_ptr.next != nil {
+						if local_ptr.destination == ptr.destination && local_ptr.code_type == function_definition {
+							ptr = local_ptr
+							break
+						}
+						local_ptr = local_ptr.next
+					}
+				}
+			case BCS_cmd:
+				if cpu_status.carry_flag {
+					var local_ptr = &head
+					for local_ptr.next != nil {
+						if local_ptr.destination == ptr.destination && local_ptr.code_type == function_definition {
+							ptr = local_ptr
+							break
+						}
+						local_ptr = local_ptr.next
+					}
+				}
+			case BCC_cmd:
+				if !cpu_status.carry_flag {
+					var local_ptr = &head
+					for local_ptr.next != nil {
+						if local_ptr.destination == ptr.destination && local_ptr.code_type == function_definition {
+							ptr = local_ptr
+							break
+						}
+						local_ptr = local_ptr.next
+					}
+				}
+			case BPL_cmd:
+				if !cpu_status.negative_flag {
+					var local_ptr = &head
+					for local_ptr.next != nil {
+						if local_ptr.destination == ptr.destination && local_ptr.code_type == function_definition {
+							ptr = local_ptr
+							break
+						}
+						local_ptr = local_ptr.next
+					}
+				}
+			case JMP_cmd:
+				if ptr.addr_mode == indirect_type {
+					int_addr := string_to_int(ptr.destination)
+					val_1 := *memory.absolute_addr(int_addr)
+					val_2 := *memory.absolute_addr(int_addr + 1)
+					str_val_1 := strconv.FormatInt(int64(val_1), 16)
+					str_val_2 := strconv.FormatInt(int64(val_2), 16)
+					if val_1 < 10 {
+						str_val_1 = "0" + str_val_1
+					}
+					full_addr := str_val_2 + str_val_1
+					println("implement indirect jmp!", full_addr)
+				} else if ptr.addr_mode == absolute_type {
+					var local_ptr = &head
+					for local_ptr.next != nil {
+						if local_ptr.destination == ptr.destination && local_ptr.code_type == function_definition {
+							ptr = local_ptr
+							break
+						}
+						local_ptr = local_ptr.next
+					}
+				}
+			case JSR_cmd:
+				if stack_pointer == 256 {
+					stack_pointer = 0
+				}
+				memory.system_stack[stack_pointer] = ptr.index
+				stack_pointer--
+				if stack_pointer == -1 {
+					stack_pointer = 255
+				}
+				var local_ptr = &head
+				for local_ptr.next != nil {
+					if local_ptr.destination == ptr.destination && local_ptr.code_type == function_definition {
+						ptr = local_ptr
+						break
+					}
+					local_ptr = local_ptr.next
+				}
+			case RTS_cmd:
+				last_index := memory.system_stack[stack_pointer]
+				stack_pointer++
+				var local_ptr = &head
+				for local_ptr.next != nil {
+					if local_ptr.index == last_index {
+						ptr = local_ptr
+						break
+					}
+					local_ptr = local_ptr.next
 				}
 			}
 		}
@@ -341,15 +704,21 @@ func TYA() {
 	cpu_status.negative_flag = accumulator&0b10000000 != 0
 }
 
-// func TSX() {
-// 	register_x = memory[stack_pointer]
-// 	cpu_status.zero_flag = register_x == 0
-// 	cpu_status.negative_flag = register_x&0b10000000 != 0
-// }
+func TSX() {
+	register_x = memory.system_stack[stack_pointer]
+	cpu_status.zero_flag = register_x == 0
+	cpu_status.negative_flag = register_x&0b10000000 != 0
+}
 
-// func TXS() {
-// 	memory[stack_pointer] = register_x
-// }
+func TXS() {
+	memory.system_stack[stack_pointer] = register_x
+	stack_pointer--
+	if stack_pointer == -1 {
+		stack_pointer = 255
+	}
+	cpu_status.zero_flag = register_x == 0
+	cpu_status.negative_flag = register_x&0b10000000 != 0
+}
 
 func CPX(val int) {
 	cpu_status.carry_flag = register_x >= val
@@ -361,6 +730,12 @@ func CMP(val int) {
 	cpu_status.carry_flag = accumulator >= val
 	cpu_status.zero_flag = accumulator == val
 	cpu_status.negative_flag = (accumulator-val)&0b1000000 != 0
+}
+
+func CPY(val int) {
+	cpu_status.carry_flag = register_y >= val
+	cpu_status.zero_flag = register_y == val
+	cpu_status.negative_flag = (register_y-val)&0b1000000 != 0
 }
 
 // func PHP() {
@@ -376,11 +751,20 @@ func CMP(val int) {
 // 	memory[stack_pointer] = cpu_status
 // }
 
-// func PLA() {
-// 	accumulator = memory[stack_pointer]
-// 	cpu_status.zero_flag = accumulator == 0
-// 	cpu_status.negative_flag = accumulator&0b10000000 != 0
-// }
+func PLA() {
+	accumulator = memory.system_stack[stack_pointer]
+	cpu_status.zero_flag = accumulator == 0
+	cpu_status.negative_flag = accumulator&0b10000000 != 0
+}
+
+func PHA() {
+	memory.system_stack[stack_pointer] = accumulator
+	//stack grows down!
+	stack_pointer--
+	if stack_pointer == -1 {
+		stack_pointer = 255
+	}
+}
 
 // func PLP() {
 // 	cpu_status.carry_flag = memory[stack_pointer].carry_flag
@@ -392,11 +776,11 @@ func CMP(val int) {
 // 	cpu_status.negative_flag = memory[stack_pointer].negative_flag
 // }
 
-// func AND(mem_addr int) {
-// 	accumulator &= memory[mem_addr]
-// 	cpu_status.zero_flag = accumulator == 0
-// 	cpu_status.negative_flag = accumulator&0b10000000 != 0
-// }
+func AND(val int) {
+	accumulator &= val
+	cpu_status.zero_flag = accumulator == 0
+	cpu_status.negative_flag = accumulator&0b10000000 != 0
+}
 
 // func EOR(mem_addr int) {
 // 	accumulator = (accumulator || memory[mem_addr]) && accumulator && memory[mem_addr]
@@ -410,15 +794,11 @@ func CMP(val int) {
 // 	cpu_status.negative_flag = accumulator&0b10000000 != 0
 // }
 
-// func BIT() {
-// 	//TODO
-// }
-
-// func INC(mem_addr int) {
-// 	memory[mem_addr]++
-// 	cpu_status.zero_flag = memory[mem_addr] == 0
-// 	cpu_status.negative_flag = memory[mem_addr]&0b10000000 != 0
-// }
+func BIT(val int) {
+	cpu_status.zero_flag = accumulator&val == 0
+	cpu_status.overflow_flag = val&0b01000000 != 0
+	cpu_status.negative_flag = val&0b10000000 != 0
+}
 
 func INX() {
 	register_x++
@@ -432,11 +812,17 @@ func INY() {
 	cpu_status.negative_flag = register_y&0b10000000 != 0
 }
 
-// func DEC(mem_addr int) {
-// 	memory[mem_addr]--
-// 	cpu_status.zero_flag = memory[mem_addr] == 0
-// 	cpu_status.negative_flag = memory[mem_addr]&0b10000000 != 0
-// }
+func DEC(mem_addr *int) {
+	*mem_addr--
+	cpu_status.zero_flag = *mem_addr == 0
+	cpu_status.negative_flag = *mem_addr&0b10000000 != 0
+}
+
+func INC(mem_addr *int) {
+	*mem_addr++
+	cpu_status.zero_flag = *mem_addr == 0
+	cpu_status.negative_flag = *mem_addr&0b10000000 != 0
+}
 
 func DEX() {
 	register_x--
@@ -458,12 +844,15 @@ func DEY() {
 // 	cpu_status.negative_flag = accumulator&0b10000000 != 0
 // }
 
-// func LSR() {
-// 	cpu_status.carry_flag = accumulator&0b00000001 != 0
-// 	accumulator /= 2
-// 	accumulator |= 0b10000000
-// 	cpu_status.negative_flag = accumulator&0b10000000 != 0
-// }
+func LSR(addr *int) {
+	cpu_status.carry_flag = accumulator&0b00000001 != 0
+	if addr == nil {
+		accumulator = accumulator >> 1
+	} else {
+		*addr = *addr >> 1
+	}
+	cpu_status.negative_flag = accumulator&0b10000000 != 0
+}
 
 // func ROR() {
 // 	accumulator = accumulator >> 1

@@ -1,5 +1,7 @@
 package main
 
+import "strconv"
+
 type Memory struct {
 	zero_page         [256]int
 	system_stack      [256]int
@@ -42,7 +44,7 @@ func (m *Memory) absolute_addr(mem_addr int) *int {
 	} else if mem_addr < 255 {
 		return &m.zero_page[mem_addr]
 	} else {
-		return &m.system_stack[mem_addr-255]
+		return &m.system_stack[mem_addr-256]
 	}
 }
 
@@ -52,15 +54,48 @@ func (m *Memory) absolute_x_addr(mem_addr int) *int {
 	} else if mem_addr < 255 {
 		return &m.zero_page[mem_addr+register_x]
 	} else {
-		return &m.system_stack[mem_addr-255+register_x]
+		return &m.system_stack[mem_addr-256+register_x]
 	}
 }
 
-func (m *Memory) indexed_indirect_addr(ptr *int, offset int) *int {
-	return &m.zero_page[*ptr+offset]
+func (m *Memory) absolute_y_addr(mem_addr int) *int {
+	if mem_addr > 511 {
+		return m.absolute_y_addr(mem_addr - 512)
+	} else if mem_addr < 255 {
+		return &m.zero_page[mem_addr+register_y]
+	} else {
+		return &m.system_stack[mem_addr-256+register_y]
+	}
 }
 
-// ADD zero page wraparount
-// func (m *Memory) indirect_indexed_addr(ptr *int, offset int) *int {
-// 	return (offset << 4) & *ptr
-// }
+func (m *Memory) indirect(first_half string, second_half string) {
+	flipped_str := second_half + first_half
+	retval := string_to_int(flipped_str)
+	println(retval, "implement indirect??")
+}
+
+func (m *Memory) indexed_indirect_addr(val int) *int {
+	lower := strconv.Itoa(m.zero_page[val+register_x])
+	upper := strconv.Itoa(m.zero_page[val+register_x+1])
+	if m.zero_page[val+register_x] < 10 {
+		upper = "0" + upper
+	}
+	if m.zero_page[val+register_x+1] < 10 {
+		lower = "0" + lower
+	}
+	ret_val := string_to_int("$" + upper + lower)
+	return m.absolute_addr(ret_val)
+}
+
+func (m *Memory) indirect_indexed_addr(val int) *int {
+	lower := strconv.Itoa(m.zero_page[val])
+	upper := strconv.Itoa(m.zero_page[val])
+	if m.zero_page[val+register_x] < 10 {
+		upper = "0" + upper
+	}
+	if m.zero_page[val+register_x+1] < 10 {
+		lower = "0" + lower
+	}
+	ret_val := string_to_int("$"+upper+lower) + register_y
+	return m.absolute_addr(ret_val)
+}

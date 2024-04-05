@@ -26,6 +26,15 @@ func dump_contents() {
 		fmt.Print("\n")
 	}
 
+	fmt.Println("\nSystem Stack:")
+	for i := 0; i < 16; i++ {
+		fmt.Print(i, ": ")
+		for j := 0; j < 16; j++ {
+			fmt.Print(memory.system_stack[i*16+j])
+		}
+		fmt.Print("\n")
+	}
+
 }
 
 func printAddrModeType(ct addr_mode) string {
@@ -192,6 +201,12 @@ func printOpCode(op Op_Code) string {
 }
 
 func dump_program() {
+	var const_ptr *Const
+	const_ptr = &const_head
+	for const_ptr.next != nil {
+		println(const_ptr.name, ": ", const_ptr.val)
+		const_ptr = const_ptr.next
+	}
 	var ptr *Program_Code
 	ptr = &head
 	for ptr.next != nil {
@@ -202,4 +217,5 @@ func dump_program() {
 		}
 		ptr = ptr.next
 	}
+
 }
