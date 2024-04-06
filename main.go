@@ -110,6 +110,15 @@ func get_addr_mode_val(split_line []string) (addr_mode, int) {
 	return ret_addr_mode, ret_value
 }
 
+func find_const(val string) string {
+	var local_ptr = &const_head
+	for local_ptr.next != nil {
+		val = strings.Replace(val, local_ptr.name, local_ptr.val, 1)
+		local_ptr = local_ptr.next
+	}
+	return val
+}
+
 func main() {
 	f, err := os.Open("test.asm")
 	if err != nil {
@@ -117,10 +126,12 @@ func main() {
 	}
 	defer f.Close()
 	scanner := bufio.NewScanner(f)
+
 	var ptr *Program_Code
 	ptr = &head
 	var var_ptr *Const
 	var_ptr = &const_head
+
 	index := 0
 	for scanner.Scan() {
 		curr_line := scanner.Text()
@@ -151,11 +162,7 @@ func main() {
 			split_line[0] = strings.ToUpper(split_line[0])
 			if len(split_line) > 1 {
 				if !strings.Contains(split_line[1], "$") {
-					var local_ptr = &const_head
-					for local_ptr.next != nil {
-						split_line[1] = strings.Replace(split_line[1], local_ptr.name, local_ptr.val, 1)
-						local_ptr = local_ptr.next
-					}
+					split_line[1] = find_const(split_line[1])
 				}
 				if strings.Contains(split_line[1], "$") || strings.Contains(split_line[1], "#") {
 					var input_addr_1 int
