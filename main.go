@@ -164,6 +164,9 @@ func main() {
 					case "LSR":
 						ptr.op_code = LSR_cmd
 						ptr.mem_1 = input_addr_1
+					case "ROR":
+						ptr.op_code = ROR_cmd
+						ptr.mem_1 = input_addr_1
 					case "AND":
 						ptr.op_code = AND_cmd
 						ptr.mem_1 = input_addr_1
@@ -231,6 +234,15 @@ func main() {
 					case "BEQ":
 						ptr.op_code = BEQ_cmd
 						ptr.destination = split_line[1]
+					case "BVC":
+						ptr.op_code = BVC_cmd
+						ptr.destination = split_line[1]
+					case "BMI":
+						ptr.op_code = BMI_cmd
+						ptr.destination = split_line[1]
+					case "BVS":
+						ptr.op_code = BVS_cmd
+						ptr.destination = split_line[1]
 					case "BCS":
 						ptr.op_code = BCS_cmd
 						ptr.destination = split_line[1]
@@ -267,6 +279,8 @@ func main() {
 					ptr.op_code = PLP_cmd
 				case "LSR":
 					ptr.op_code = LSR_cmd
+				case "ROR":
+					ptr.op_code = ROR_cmd
 				case "RTS":
 					ptr.op_code = RTS_cmd
 				case "BRK":
@@ -424,6 +438,18 @@ func run_program() {
 				} else {
 					LSR(nil)
 				}
+			case ROR_cmd:
+				if ptr.addr_mode == zero_page_type {
+					ROR(memory.zero_page_addr(ptr.mem_1))
+				} else if ptr.addr_mode == zero_page_x_type {
+					ROR(memory.zero_page_x_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_type {
+					ROR(memory.absolute_addr(ptr.mem_1))
+				} else if ptr.addr_mode == absolute_x_type {
+					ROR(memory.absolute_x_addr(ptr.mem_1))
+				} else {
+					ROR(&accumulator)
+				}
 			case PLP_cmd:
 				PLP()
 			case PHP_cmd:
@@ -493,8 +519,20 @@ func run_program() {
 				if !cpu_status.zero_flag {
 					ptr = break_to(ptr.destination)
 				}
+			case BMI_cmd:
+				if cpu_status.negative_flag {
+					ptr = break_to(ptr.destination)
+				}
 			case BEQ_cmd:
 				if cpu_status.zero_flag {
+					ptr = break_to(ptr.destination)
+				}
+			case BVS_cmd:
+				if cpu_status.overflow_flag {
+					ptr = break_to(ptr.destination)
+				}
+			case BVC_cmd:
+				if !cpu_status.overflow_flag {
 					ptr = break_to(ptr.destination)
 				}
 			case BCS_cmd:
@@ -762,13 +800,12 @@ func DEY() {
 	cpu_status.negative_flag = register_y&0b10000000 != 0
 }
 
-// // supposed to be mem address or accum?
-// func ASL() {
-// 	cpu_status.carry_flag = accumulator&0b10000000 != 0
-// 	accumulator &= 0b11111110
-// 	cpu_status.zero_flag = accumulator == 0
-// 	cpu_status.negative_flag = accumulator&0b10000000 != 0
-// }
+func ASL() {
+	cpu_status.carry_flag = accumulator&0b10000000 != 0
+	accumulator &= 0b11111110
+	cpu_status.zero_flag = accumulator == 0
+	cpu_status.negative_flag = accumulator&0b10000000 != 0
+}
 
 func LSR(addr *int) {
 	cpu_status.carry_flag = accumulator&0b00000001 != 0
@@ -780,16 +817,17 @@ func LSR(addr *int) {
 	cpu_status.negative_flag = accumulator&0b10000000 != 0
 }
 
-// func ROR() {
-// 	accumulator = accumulator >> 1
-// 	if cpu_status.carry_flag {
-// 		accumulator |= 0b00000001
-// 	} else {
-// 		accumulator &= 0b11111110
-// 	}
-// 	cpu_status.zero_flag = accumulator == 0
-// 	cpu_status.negative_flag = accumulator&0b00000001 != 0 != 0
-// }
+func ROR(addr *int) {
+	cpu_status.carry_flag = *addr&0b00000001 != 0
+	*addr = *addr >> 1
+	if cpu_status.carry_flag {
+		*addr = *addr | 0b10000000
+	} else {
+		*addr = *addr & 0b01111111
+	}
+	cpu_status.zero_flag = accumulator == 0
+	cpu_status.negative_flag = *addr&0b10000000 != 0
+}
 
 // func ROL() {
 // 	accumulator = accumulator << 1
