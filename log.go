@@ -21,7 +21,7 @@ func dump_contents() {
 	for i := 0; i < 16; i++ {
 		fmt.Print(i, ": ")
 		for j := 0; j < 16; j++ {
-			fmt.Print(memory.zero_page[i*16+j])
+			fmt.Print(memory.zero_page[i*16+j], " ")
 		}
 		fmt.Print("\n")
 	}
@@ -30,11 +30,23 @@ func dump_contents() {
 	for i := 0; i < 16; i++ {
 		fmt.Print(i, ": ")
 		for j := 0; j < 16; j++ {
-			fmt.Print(memory.system_stack[i*16+j])
+			fmt.Print(memory.system_stack[i*16+j], " ")
 		}
 		fmt.Print("\n")
 	}
+}
 
+func print_screen() {
+	for i := 0; i < 32; i++ {
+		for j := 0; j < 32; j++ {
+			if memory.gen_memory[i*32+j] == 0 {
+				fmt.Print(".")
+			} else {
+				fmt.Print(memory.gen_memory[i*32+j])
+			}
+		}
+		fmt.Print("\n")
+	}
 }
 
 func printAddrModeType(ct addr_mode) string {

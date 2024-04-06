@@ -1,10 +1,10 @@
-define appleL         $00 
-define appleH         $01 
-define snakeHeadL     $10 
-define snakeHeadH     $11 
-define snakeBodyStart $12 
-define snakeDirection $02 
-define snakeLength    $03 
+define appleL         $00
+define appleH         $01
+define snakeHeadL     $10
+define snakeHeadH     $11
+define snakeBodyStart $12
+define snakeDirection $02
+define snakeLength    $03
 
 define movingUp      1
 define movingRight   2
@@ -19,7 +19,6 @@ define ASCII_d      $64
 define sysRandom    $fe
 define sysLastKey   $ff
 
-
   jsr init
   jsr loop
 
@@ -30,10 +29,10 @@ init:
 
 
 initSnake:
-  lda #movingRight  
+  lda #movingRight
   sta snakeDirection
 
-  lda #4  
+  lda #4
   sta snakeLength
   
   lda #$11
@@ -43,7 +42,7 @@ initSnake:
   sta snakeBodyStart
   
   lda #$0f
-  sta $14  
+  sta $14
   
   lda #$04
   sta snakeHeadH
@@ -51,22 +50,18 @@ initSnake:
   sta $15 
   rts
 
-
 generateApplePosition:
-  lda sysRandom
+  lda #sysRandom
   sta appleL
 
-  lda sysRandom
-  and #$03
+  lda #sysRandom
+  and #$03 
   clc
   adc #2
   sta appleH
-
   rts
 
-
 loop:
-  jsr readKeys
   jsr checkCollision
   jsr updateSnake
   jsr drawApple
@@ -74,59 +69,10 @@ loop:
   jsr spinWheels
   jmp loop
 
-
-readKeys:
-  lda sysLastKey
-  cmp #ASCII_w
-  beq upKey
-  cmp #ASCII_d
-  beq rightKey
-  cmp #ASCII_s
-  beq downKey
-  cmp #ASCII_a
-  beq leftKey
-  rts
-upKey:
-  lda #movingDown
-  bit snakeDirection
-  bne illegalMove
-
-  lda #movingUp
-  sta snakeDirection
-  rts
-rightKey:
-  lda #movingLeft
-  bit snakeDirection
-  bne illegalMove
-
-  lda #movingRight
-  sta snakeDirection
-  rts
-downKey:
-  lda #movingUp
-  bit snakeDirection
-  bne illegalMove
-
-  lda #movingDown
-  sta snakeDirection
-  rts
-leftKey:
-  lda #movingRight
-  bit snakeDirection
-  bne illegalMove
-
-  lda #movingLeft
-  sta snakeDirection
-  rts
-illegalMove:
-  rts
-
-
 checkCollision:
   jsr checkAppleCollision
   jsr checkSnakeCollision
   rts
-
 
 checkAppleCollision:
   lda appleL
@@ -135,17 +81,14 @@ checkAppleCollision:
   lda appleH
   cmp snakeHeadH
   bne doneCheckingAppleCollision
-
-
   inc snakeLength
-  inc snakeLength 
+  inc snakeLength ;increase length
   jsr generateApplePosition
 doneCheckingAppleCollision:
   rts
 
-
 checkSnakeCollision:
-  ldx #2 
+  ldx #2
 snakeCollisionLoop:
   lda snakeHeadL,x
   cmp snakeHeadL
@@ -159,7 +102,7 @@ maybeCollided:
 continueCollisionLoop:
   inx
   inx
-  cpx snakeLength         
+  cpx snakeLength
   beq didntCollide
   jmp snakeCollisionLoop
 
@@ -167,7 +110,6 @@ didCollide:
   jmp gameOver
 didntCollide:
   rts
-
 
 updateSnake:
   ldx snakeLength
@@ -230,24 +172,21 @@ left:
 collision:
   jmp gameOver
 
-
 drawApple:
   ldy #0
-  lda sysRandom
+  lda #sysRandom
   sta (appleL),y
   rts
-
 
 drawSnake:
   ldx snakeLength
   lda #0
-  sta (snakeHeadL,x)
+  sta (snakeHeadL,x) 
 
   ldx #0
   lda #1
   sta (snakeHeadL,x) 
   rts
-
 
 spinWheels:
   ldx #0
@@ -257,6 +196,5 @@ spinloop:
   dex
   bne spinloop
   rts
-
 
 gameOver:
