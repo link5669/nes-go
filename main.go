@@ -356,7 +356,8 @@ func run_program() {
 			//TODO
 		} else {
 			//for real vals
-			var val int = 0
+			var val int
+			var val_ptr *int
 			if ptr.addr_mode == immediate_type {
 				val = ptr.mem_1
 			} else if ptr.addr_mode == zero_page_type {
@@ -376,29 +377,30 @@ func run_program() {
 			} else if ptr.addr_mode == indirect_indexed_type {
 				val = (*memory.indirect_indexed_addr(ptr.mem_1))
 			}
+			if ptr.addr_mode == zero_page_type {
+				val_ptr = (memory.zero_page_addr(ptr.mem_1))
+			} else if ptr.addr_mode == zero_page_x_type {
+				val_ptr = (memory.zero_page_x_addr(ptr.mem_1))
+			} else if ptr.addr_mode == zero_page_y_type {
+				val_ptr = (memory.zero_page_y_addr(ptr.mem_1))
+			} else if ptr.addr_mode == absolute_type {
+				val_ptr = (memory.absolute_addr(ptr.mem_1))
+			} else if ptr.addr_mode == absolute_x_type {
+				val_ptr = (memory.absolute_x_addr(ptr.mem_1))
+			} else if ptr.addr_mode == absolute_y_type {
+				val_ptr = (memory.absolute_y_addr(ptr.mem_1))
+			} else if ptr.addr_mode == indexed_indirect_type {
+				val_ptr = (memory.indexed_indirect_addr(ptr.mem_1))
+			} else if ptr.addr_mode == indirect_indexed_type {
+				val_ptr = (memory.indirect_indexed_addr(ptr.mem_1))
+			}
 			switch ptr.op_code {
 			case DEC_cmd:
-				if ptr.addr_mode == zero_page_type {
-					DEC(memory.zero_page_addr(ptr.mem_1))
-				} else if ptr.addr_mode == zero_page_x_type {
-					DEC(memory.zero_page_x_addr(ptr.mem_1))
-				} else if ptr.addr_mode == absolute_type {
-					DEC(memory.absolute_addr(ptr.mem_1))
-				} else if ptr.addr_mode == absolute_x_type {
-					DEC(memory.absolute_x_addr(ptr.mem_1))
-				}
+				DEC(val_ptr)
 			case BIT_cmd:
 				BIT(val)
 			case INC_cmd:
-				if ptr.addr_mode == zero_page_type {
-					INC(memory.zero_page_addr(ptr.mem_1))
-				} else if ptr.addr_mode == zero_page_x_type {
-					INC(memory.zero_page_x_addr(ptr.mem_1))
-				} else if ptr.addr_mode == absolute_type {
-					INC(memory.absolute_addr(ptr.mem_1))
-				} else if ptr.addr_mode == absolute_x_type {
-					INC(memory.absolute_x_addr(ptr.mem_1))
-				}
+				INC(val_ptr)
 			case LDA_cmd:
 				LDA(val)
 			case SBC_cmd:
@@ -414,48 +416,21 @@ func run_program() {
 			case CPY_cmd:
 				CPY(val)
 			case STA_cmd:
-				if ptr.addr_mode == zero_page_type {
-					STA(memory.zero_page_addr(ptr.mem_1))
-				} else if ptr.addr_mode == zero_page_x_type {
-					STA(memory.zero_page_x_addr(ptr.mem_1))
-				} else if ptr.addr_mode == zero_page_y_type {
-					STA(memory.zero_page_y_addr(ptr.mem_1))
-				} else if ptr.addr_mode == absolute_type {
-					STA(memory.absolute_addr(ptr.mem_1))
-				} else if ptr.addr_mode == absolute_x_type {
-					STA(memory.absolute_x_addr(ptr.mem_1))
-				} else if ptr.addr_mode == absolute_y_type {
-					STA(memory.absolute_y_addr(ptr.mem_1))
-				} else if ptr.addr_mode == indexed_indirect_type {
-					STA(memory.indexed_indirect_addr(ptr.mem_1))
-				} else if ptr.addr_mode == indirect_indexed_type {
-					STA(memory.indirect_indexed_addr(ptr.mem_1))
-				}
+				STA(val_ptr)
 			case AND_cmd:
 				AND(val)
 			case LSR_cmd:
-				if ptr.addr_mode == zero_page_type {
-					LSR(memory.zero_page_addr(ptr.mem_1))
-				} else if ptr.addr_mode == zero_page_x_type {
-					LSR(memory.zero_page_x_addr(ptr.mem_1))
-				} else if ptr.addr_mode == absolute_type {
-					LSR(memory.absolute_addr(ptr.mem_1))
-				} else if ptr.addr_mode == absolute_x_type {
-					LSR(memory.absolute_x_addr(ptr.mem_1))
-				} else {
+				//fix me!
+				if ptr.addr_mode == implicit_type {
 					LSR(nil)
+				} else {
+					LSR(val_ptr)
 				}
 			case ROR_cmd:
-				if ptr.addr_mode == zero_page_type {
-					ROR(memory.zero_page_addr(ptr.mem_1))
-				} else if ptr.addr_mode == zero_page_x_type {
-					ROR(memory.zero_page_x_addr(ptr.mem_1))
-				} else if ptr.addr_mode == absolute_type {
-					ROR(memory.absolute_addr(ptr.mem_1))
-				} else if ptr.addr_mode == absolute_x_type {
-					ROR(memory.absolute_x_addr(ptr.mem_1))
+				if ptr.addr_mode == implicit_type {
+					ROR(nil)
 				} else {
-					ROR(&accumulator)
+					ROR(val_ptr)
 				}
 			case PLP_cmd:
 				PLP()
@@ -505,21 +480,9 @@ func run_program() {
 			case TXA_cmd:
 				TXA()
 			case STX_cmd:
-				if ptr.addr_mode == zero_page_type {
-					STX(memory.zero_page_addr(ptr.mem_1))
-				} else if ptr.addr_mode == zero_page_x_type {
-					STX(memory.zero_page_x_addr(ptr.mem_1))
-				} else if ptr.addr_mode == absolute_type {
-					STX(memory.absolute_addr(ptr.mem_1))
-				}
+				STX(val_ptr)
 			case STY_cmd:
-				if ptr.addr_mode == zero_page_type {
-					STY(memory.zero_page_addr(ptr.mem_1))
-				} else if ptr.addr_mode == zero_page_x_type {
-					STY(memory.zero_page_x_addr(ptr.mem_1))
-				} else if ptr.addr_mode == absolute_type {
-					STY(memory.absolute_addr(ptr.mem_1))
-				}
+				STY(val_ptr)
 			case ADC_cmd:
 				ADC(val)
 			case BNE_cmd:
@@ -572,14 +535,7 @@ func run_program() {
 			case JSR_cmd:
 				stack_pointer--
 				memory.system_stack[stack_pointer] = ptr.index
-				var local_ptr = &head
-				for local_ptr.next != nil {
-					if local_ptr.destination == ptr.destination && local_ptr.code_type == function_definition {
-						ptr = local_ptr
-						break
-					}
-					local_ptr = local_ptr.next
-				}
+				ptr = break_to(ptr.destination)
 			case RTS_cmd:
 				last_index := memory.system_stack[stack_pointer]
 				stack_pointer++
