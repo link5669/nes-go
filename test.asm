@@ -51,10 +51,10 @@ initSnake:
   rts
 
 generateApplePosition:
-  lda #sysRandom
+  lda sysRandom
   sta appleL
 
-  lda #sysRandom
+  lda sysRandom
   and #$03 
   clc
   adc #2
@@ -174,7 +174,7 @@ collision:
 
 drawApple:
   ldy #0
-  lda #sysRandom
+  lda sysRandom
   sta (appleL),y
   rts
 
