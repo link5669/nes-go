@@ -1,179 +1,230 @@
-jsr init
-jsr loop
+Reset:
+  jsr _func_8606       
+  jsr _func_8638                 
 
-init:
-  jsr initSnake
-  jsr generateApplePosition
-  rts
+_func_8606:
+  jsr _func_860d              
+  jsr _func_862a                 
+  rts                            
 
-generateApplePosition:
-  lda $fe
-  sta $00
-
-  lda $fe
-  and #$03 
-  clc
-  adc #2
-  sta $01
-  rts
-
-
-initSnake:
-  lda #$2
-  sta $02
-
-  lda #4
+_func_860d:
+  lda #$02                       
+  sta $02           
+  lda #$06                       
   sta $03
-  
-  lda #$11
-  sta $10
-  
-  lda #$10
-  sta $12
-  
-  lda #$0f
-  sta $14
-  
-  lda #$04
-  sta $11
-  sta $13 
-  sta $15 
-  rts
+  lda #$11                       
+  sta $10        
+  lda #$10                       
+  sta $12        
+  lda #$0F                       
+  sta $14                      
+  lda #$04                       
+  sta $11        
+  sta $13                      
+  sta $15                      
+  rts                            
 
-loop:
-  jsr checkCollision
-  jsr updateSnake
-  jsr drawApple
-  jsr drawSnake
-  jsr spinWheels
-  jmp loop
+_func_862a:
+  lda $FE                
+  sta $00        
+  lda $FE                
+  and #$03                       
+  clc                            
+  adc #$02                       
+  sta $01                
+  rts                            
 
-checkCollision:
-  jsr checkAppleCollision
-  jsr checkSnakeCollision
-  rts
+_func_8638:
+  jsr _func_864d         
+  jsr _func_868d            
+  jsr _func_86c3    
+  jsr _func_8719   
+  jsr _func_8720        
+  jsr _func_872d                 
+  jmp _func_8638                 
 
-checkAppleCollision:
-  lda $00
-  cmp $10
-  bne doneCheckingAppleCollision
-  lda $01
-  cmp $11
-  bne doneCheckingAppleCollision
-  inc $03
-  inc $03 ;increase length
-  jsr generateApplePosition
-doneCheckingAppleCollision:
-  rts
+_func_864d:
+  lda $FF                      
+  cmp #$77                       
+  beq _label_8660                
+  cmp #$64                       
+  beq _label_866b                
+  cmp #$73                       
+  beq _label_8676                
+  cmp #$61                       
+  beq _label_8681                
+  rts                            
 
-checkSnakeCollision:
-  ldx #2
-snakeCollisionLoop:
-  lda $10,x
-  cmp $10
-  bne continueCollisionLoop
+_label_8660:
+  lda #$04                       
+  bit $02                
+  bne _label_868c                
+  lda #$01                       
+  sta $02                
+  rts                            
 
-maybeCollided:
-  lda $11,x
-  cmp $11
-  beq didCollide
+_label_866b:
+  lda #$08                       
+  bit $02                
+  bne _label_868c                
+  lda #$02                       
+  sta $02                
+  rts                            
 
-continueCollisionLoop:
-  inx
-  inx
-  cpx $03
-  beq didntCollide
-  jmp snakeCollisionLoop
+_label_8676:
+  lda #$01                       
+  bit $02                
+  bne _label_868c                
+  lda #$04                       
+  sta $02                
+  rts                            
 
-didCollide:
-  jmp gameOver
-didntCollide:
-  rts
+_label_8681:
+  lda #$02                       
+  bit $02                
+  bne _label_868c                
+  lda #$08                       
+  sta $02                
+  rts                            
 
-updateSnake:
-  ldx $03
-  dex
-  txa
-updateloop:
-  lda $10,x
-  sta $12,x
-  dex
-  bpl updateloop
+_label_868c:
+  rts                            
 
-  lda $02
-  lsr
-  bcs up
-  lsr
-  bcs right
-  lsr
-  bcs down
-  lsr
-  bcs left
-up:
-  lda $10
-  sec
-  sbc #$20
-  sta $10
-  bcc upup
-  rts
-upup:
-  dec $11
-  lda #$1
-  cmp $11
-  beq collision
-  rts
-right:
-  inc $10
-  lda #$1f
-  bit $10
-  beq collision
-  rts
-down:
-  lda $10
-  clc
-  adc #$20
-  sta $10
-  bcs downdown
-  rts
-downdown:
-  inc $11
-  lda #$6
-  cmp $11
-  beq collision
-  rts
-left:
-  dec $10
-  lda $10
-  and #$1f
-  cmp #$1f
-  beq collision
-  rts
-collision:
-  jmp gameOver
+_func_868d:
+  jsr _func_8694             
+  jsr _func_86a8                 
+  rts                            
 
-drawApple:
-  ldy #0
-  lda $fe
-  sta ($00),y
-  rts
+_func_8694:
+  lda $00        
+  cmp $10        
+  bne _label_86a7                
+  lda $01                
+  cmp $11        
+  bne _label_86a7                
+  inc $03                
+  inc $03                
+  jsr _func_862a                 
 
-drawSnake:
-  ldx $03
-  lda #0
-  sta ($10,x) 
+_label_86a7:
+  rts                            
 
-  ldx #0
-  lda #1
-  sta ($10,x) 
-  rts
+_func_86a8:
+  ldx #$02                       
 
-spinWheels:
-  ldx #0
-spinloop:
-  nop
-  nop
-  dex
-  bne spinloop
-  rts
+_label_86aa:
+  lda $10,X      
+  cmp $10        
+  bne _label_86b6                
+  lda $11,X      
+  cmp $11        
+  beq _label_86bf                
 
-gameOver:
+_label_86b6:
+  inx                            
+  inx                            
+  cpx $03                
+  beq _label_86c2                
+  jmp _label_86aa                
+
+_label_86bf:
+  jmp _label_8735                
+
+_label_86c2:
+  rts                            
+
+_func_86c3:
+  ldx $03                
+  dex                    
+  txa                            
+
+_label_86c7:
+  lda $10,X      
+  sta $12,X   
+  dex                            
+  bpl _label_86c7      
+  lda $02                
+  lsr                     
+  bcs _label_86dc     
+  lsr                   
+  bcs _label_86ef                
+  lsr                          
+  bcs _label_86f8                
+  lsr                          
+  bcs _label_870b                
+
+_label_86dc:
+  lda $10        
+  sec                            
+  sbc #$20                       
+  sta $10        
+  bcc _label_86e6                
+  rts                            
+
+_label_86e6:
+  dec $11        
+  lda #$01                       
+  cmp $11        
+  beq _label_8716                
+  rts                            
+
+_label_86ef:
+  inc $10     
+  lda #$1F                       
+  bit $10        
+  beq _label_8716           
+  rts                            
+
+_label_86f8:
+  lda $10        
+  clc                            
+  adc #$20                       
+  sta $10      
+  bcs _label_8702                
+  rts                            
+
+_label_8702:
+  inc $11        
+  lda #$06                       
+  cmp $11        
+  beq _label_8716                
+  rts                            
+
+_label_870b:
+  dec $10        
+  lda $10        
+  and #$1F                       
+  cmp #$1F                       
+  beq _label_8716                
+  rts                            
+
+_label_8716:
+  jmp _label_8735                
+
+_func_8719:
+  ldy #$00                
+  lda $FE            
+  sta ($00),Y      
+  rts                            
+
+_func_8720:
+  ldx $03                
+  lda #$00                       
+  sta ($10,X)      
+  ldx #$00                       
+  lda #$01                       
+  sta ($10,X)      
+  rts                            
+
+_func_872d:
+  ldx #$00                       
+
+_label_872f:
+  nop                            
+  nop                            
+  dex                            
+  bne _label_872f                
+  rts                            
+
+_label_8735:
+  brk

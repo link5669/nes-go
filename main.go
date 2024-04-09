@@ -1,4 +1,3 @@
-// https://skilldrick.github.io/easy6502/ -- use for testing!
 package main
 
 import (
@@ -27,16 +26,6 @@ var memory Memory
 var const_head Const = Const{}
 
 var head Program_Code = Program_Code{}
-
-// func accumulator_add(val int) bool {
-// 	if accumulator+val > 0xFF {
-// 		accumulator += val - 0x100
-// 		return true
-// 	} else {
-// 		accumulator += val
-// 		return false
-// 	}
-// }
 
 func string_to_int(str string) int {
 	split := strings.TrimPrefix(str, "#")
@@ -71,45 +60,50 @@ func split(val string, char string) []string {
 func get_addr_mode_val(split_line []string) (addr_mode, int) {
 	var ret_addr_mode addr_mode
 	var ret_value int
-	split_addr_1 := split(split_line[1], ",")
-	if strings.Contains(split_line[1], "#") {
-		ret_addr_mode = immediate_type
-		ret_value = string_to_int(split_line[1])
-	} else if len(split_addr_1) > 1 && !strings.Contains(split_line[1], "(") {
-		ret_value = string_to_int(split_addr_1[0])
-		if strings.ToUpper(split_addr_1[1]) == "Y" {
-			if len(split(split_addr_1[0], "")) == 5 {
-				ret_addr_mode = absolute_y_type
-			} else {
-				ret_addr_mode = zero_page_y_type
-			}
-		} else if strings.ToUpper(split_addr_1[1]) == "X" {
-			if len(split(split_addr_1[0], "")) == 5 {
-				ret_addr_mode = absolute_x_type
-			} else {
-				ret_addr_mode = zero_page_x_type
-			}
-		}
+	if split_line[1] == "a" {
+		ret_addr_mode = accumulator_type
+		ret_value = 0
 	} else {
-		if !strings.Contains(split_line[1], "(") {
+		split_addr_1 := split(split_line[1], ",")
+		if strings.Contains(split_line[1], "#") {
+			ret_addr_mode = immediate_type
 			ret_value = string_to_int(split_line[1])
-			if len(split(split_addr_1[0], "")) == 5 {
-				ret_addr_mode = absolute_type
-			} else {
-				ret_addr_mode = zero_page_type
+		} else if len(split_addr_1) > 1 && !strings.Contains(split_line[1], "(") {
+			ret_value = string_to_int(split_addr_1[0])
+			if strings.ToUpper(split_addr_1[1]) == "Y" {
+				if len(split(split_addr_1[0], "")) == 5 {
+					ret_addr_mode = absolute_y_type
+				} else {
+					ret_addr_mode = zero_page_y_type
+				}
+			} else if strings.ToUpper(split_addr_1[1]) == "X" {
+				if len(split(split_addr_1[0], "")) == 5 {
+					ret_addr_mode = absolute_x_type
+				} else {
+					ret_addr_mode = zero_page_x_type
+				}
 			}
 		} else {
-			addr := strings.TrimLeft(split_line[1], "(")
-			splita := split(addr, "")
-			if splita[len(splita)-1] == ")" {
-				ret_addr_mode = indexed_indirect_type
-				addr = split(addr, ",")[0]
-				ret_value = string_to_int(addr)
+			if !strings.Contains(split_line[1], "(") {
+				ret_value = string_to_int(split_line[1])
+				if len(split(split_addr_1[0], "")) == 5 {
+					ret_addr_mode = absolute_type
+				} else {
+					ret_addr_mode = zero_page_type
+				}
 			} else {
-				addr = split(addr, ",")[0]
-				addr = strings.TrimRight(addr, ")")
-				ret_value = string_to_int(addr)
-				ret_addr_mode = indirect_indexed_type
+				addr := strings.TrimLeft(split_line[1], "(")
+				splita := split(addr, "")
+				if splita[len(splita)-1] == ")" {
+					ret_addr_mode = indexed_indirect_type
+					addr = split(addr, ",")[0]
+					ret_value = string_to_int(addr)
+				} else {
+					addr = split(addr, ",")[0]
+					addr = strings.TrimRight(addr, ")")
+					ret_value = string_to_int(addr)
+					ret_addr_mode = indirect_indexed_type
+				}
 			}
 		}
 	}
@@ -170,7 +164,10 @@ func read_asm() {
 				if !strings.Contains(split_line[1], "$") {
 					split_line[1] = find_const(split_line[1])
 				}
-				if strings.Contains(split_line[1], "$") || strings.Contains(split_line[1], "#") {
+				if split_line[0] == "LSR" {
+					println("alkjsd")
+				}
+				if strings.Contains(split_line[1], "$") || strings.Contains(split_line[1], "#") || split_line[1] == "a" {
 					var input_addr_1 int
 					ptr.addr_mode, input_addr_1 = get_addr_mode_val(split_line)
 					switch split_line[0] {
@@ -362,7 +359,7 @@ func read_asm() {
 
 	dump_program()
 	run_program()
-	dump_contents()
+	// dump_contents()
 
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
@@ -576,7 +573,7 @@ func LoadNESFile(path string) {
 			ptr.cycles = 2
 		case 0x24:
 			ptr.op_code = BIT_cmd
-			ptr.addr_mode = zero_page_x_type
+			ptr.addr_mode = zero_page_type
 			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 3
 		case 0x2C:
@@ -600,8 +597,11 @@ func LoadNESFile(path string) {
 			ptr.mem_1 = int(prg[program_counter-0xC000]) + ptr.index + 2
 			ptr.cycles = 2
 		case 0x00:
-			ptr.op_code = BRK_cmd
-			ptr.cycles = 7
+			ptr.next = &Program_Code{}
+			ptr = ptr.next
+			continue
+			// ptr.op_code = BRK_cmd
+			// ptr.cycles = 7
 		case 0x50:
 			ptr.op_code = BVC_cmd
 			program_counter++
@@ -1193,13 +1193,33 @@ func LoadNESFile(path string) {
 			ptr.cycles = 8
 			ptr.addr_mode = indirect_indexed_type
 			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
+		case 0x87:
+			ptr.op_code = SAX_cmd
+			ptr.addr_mode = zero_page_type
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
+			ptr.cycles = 3
+		case 0x97:
+			ptr.op_code = SAX_cmd
+			ptr.addr_mode = zero_page_y_type
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
+			ptr.cycles = 4
+		case 0x8F:
+			ptr.op_code = SAX_cmd
+			ptr.addr_mode = absolute_type
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
+			ptr.cycles = 4
+		case 0x83:
+			ptr.op_code = SAX_cmd
+			ptr.addr_mode = indexed_indirect_type
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
+			ptr.cycles = 6
 		}
 		ptr.next = &Program_Code{}
 		ptr = ptr.next
 	}
-	// dump_program()
+	dump_program()
 	run_program()
-	// dump_contents()
+	dump_contents()
 }
 
 func single_addr(val byte) int {
@@ -1238,46 +1258,49 @@ func run_program() {
 	reset()
 	var ptr *Program_Code = &head
 	cpu_status.interrupt_disable = true
-	i := 0
-	for ptr.next != nil {
-		if ptr.index == 0xC94F {
-			println("alksd")
-		}
-		index := fmt.Sprintf("%x", ptr.index)
-		mem := fmt.Sprintf("%x", ptr.mem_1)
-		flags := 0
-		if cpu_status.carry_flag {
-			flags += 1
-		}
-		if cpu_status.zero_flag {
-			flags += 2
-		}
-		if cpu_status.interrupt_disable {
-			flags += 4
-		}
-		if cpu_status.decimal_mode {
-			flags += 8
-		}
-		if cpu_status.break_command {
-			flags += 16
-		}
-		flags += 32
-		if cpu_status.overflow_flag {
-			flags += 64
-		}
-		if cpu_status.negative_flag {
-			flags += 128
-		}
-		run_tests(fmt.Sprint(strings.ToUpper(index), " ", printOpCode(ptr.op_code), " ", mem, " A:", strings.ToUpper(fmt.Sprintf("%x", accumulator)), " X:", strings.ToUpper(fmt.Sprintf("%x", register_x)), " Y:", strings.ToUpper(fmt.Sprintf("%x", register_y)), " P:", strings.ToUpper(fmt.Sprintf("%x", flags)), " SP:", strings.ToUpper(fmt.Sprintf("%x", stack_pointer)), " CYC:", cycles), i)
-		i++
-		if ptr.index >= 0xC9C3 {
+	// i := 0
+
+	// index := fmt.Sprintf("%x", ptr.index)
+	// mem := fmt.Sprintf("%x", ptr.mem_1)
+	// flags := 0
+	// if cpu_status.carry_flag {
+	// 	flags += 1
+	// }
+	// if cpu_status.zero_flag {
+	// 	flags += 2
+	// }
+	// if cpu_status.interrupt_disable {
+	// 	flags += 4
+	// }
+	// if cpu_status.decimal_mode {
+	// 	flags += 8
+	// }
+	// if cpu_status.break_command {
+	// 	flags += 16
+	// }
+	// flags += 32
+	// if cpu_status.overflow_flag {
+	// 	flags += 64
+	// }
+	// if cpu_status.negative_flag {
+	// 	flags += 128
+	// }
+	// run_tests(fmt.Sprint(strings.ToUpper(index), " ", printOpCode(ptr.op_code), " ", mem, " A:", strings.ToUpper(fmt.Sprintf("%x", accumulator)), " X:", strings.ToUpper(fmt.Sprintf("%x", register_x)), " Y:", strings.ToUpper(fmt.Sprintf("%x", register_y)), " P:", strings.ToUpper(fmt.Sprintf("%x", flags)), " SP:", strings.ToUpper(fmt.Sprintf("%x", stack_pointer)), " CYC:", cycles), i)
+	// i++
+	// if ptr.index >= 0xC66E {
+	// 	break
+	// }
+	for ptr != nil {
+		if ptr.next == nil {
 			break
+		}
+		if ptr.op_code == 21 {
+			println("akjshd")
 		}
 		cycles += ptr.cycles
 		if ptr.code_type == function_definition {
 			//TODO
 		} else {
-			//for real vals
 			var val int
 			var val_ptr *int
 			if ptr.addr_mode == immediate_type {
@@ -1339,6 +1362,8 @@ func run_program() {
 				ORA(val)
 			case ASL_cmd:
 				ASL(val_ptr)
+			case SAX_cmd:
+				SAX(val_ptr)
 			case EOR_cmd:
 				EOR(val)
 			case CMP_cmd:
@@ -1351,8 +1376,8 @@ func run_program() {
 				AND(val)
 			case LSR_cmd:
 				//fix me!
-				if ptr.addr_mode == implicit_type {
-					LSR(nil)
+				if ptr.addr_mode == accumulator_type || ptr.addr_mode == implicit_type {
+					LSR(&accumulator)
 				} else {
 					LSR(val_ptr)
 				}
@@ -1374,8 +1399,8 @@ func run_program() {
 				PHP()
 			case BRK_cmd:
 				cpu_status.break_command = true
-				// dump_contents()
-				// os.Exit(0)
+				dump_contents()
+				os.Exit(0)
 			case TAX_cmd:
 				TAX()
 			case TAY_cmd:
@@ -1405,7 +1430,7 @@ func run_program() {
 			case CLV_cmd:
 				CLV()
 			case NOP_cmd:
-				time.Sleep(1 * time.Millisecond)
+				time.Sleep(5 * time.Microsecond)
 			case PLA_cmd:
 				PLA()
 			case PHA_cmd:
@@ -1517,13 +1542,14 @@ func run_program() {
 			}
 		}
 		ptr = ptr.next
+		print_screen()
 	}
 }
 
 func break_to(destination string, mem_dest int, mem_start int) *Program_Code {
 	var local_ptr = &head
 	for local_ptr.next != nil {
-		if (local_ptr.destination == destination && local_ptr.code_type == function_definition) || local_ptr.index == mem_dest {
+		if (local_ptr.destination == destination && local_ptr.code_type == function_definition) || (local_ptr.index == mem_dest && mem_dest != 0) {
 			//FIX THISS
 			var m256a int = mem_start + 256 - (mem_start % 256)
 			var m256b int = mem_dest + 256 - (mem_dest % 256)
@@ -1537,10 +1563,14 @@ func break_to(destination string, mem_dest int, mem_start int) *Program_Code {
 	return nil
 }
 
+func SAX(mem_addr *int) {
+	*mem_addr = accumulator & register_x
+}
+
 func load(val int, desti *int) {
 	*desti = val
 	cpu_status.zero_flag = *desti == 0
-	cpu_status.negative_flag = accumulator&0b10000000 != 00
+	cpu_status.negative_flag = *desti&0b10000000 != 0
 }
 
 func LDA(mem_addr int) {
@@ -1606,19 +1636,19 @@ func TXS() {
 func CPX(val int) {
 	cpu_status.carry_flag = register_x >= val
 	cpu_status.zero_flag = register_x == val
-	cpu_status.negative_flag = (register_x-val)&0b1000000 != 0
+	cpu_status.negative_flag = (register_x-val)&0b10000000 != 0
 }
 
 func CMP(val int) {
 	cpu_status.carry_flag = accumulator >= val
 	cpu_status.zero_flag = accumulator == val
-	cpu_status.negative_flag = (accumulator-val)&0b1000000 != 0
+	cpu_status.negative_flag = (accumulator-val)&0b10000000 != 0
 }
 
 func CPY(val int) {
 	cpu_status.carry_flag = register_y >= val
 	cpu_status.zero_flag = register_y == val
-	cpu_status.negative_flag = (register_y-val)&0b1000000 != 0
+	cpu_status.negative_flag = (register_y-val)&0b10000000 != 0
 }
 
 func PHP() {
@@ -1824,13 +1854,17 @@ func ADC(val int) {
 
 func SBC(val int) {
 	if !cpu_status.carry_flag {
-		accumulator += -(val - 1)
-		// accumulator_add(-(val - 1))
+		cpu_status.carry_flag = !(accumulator-val-1 < -0xFF)
+		cpu_status.overflow_flag = (accumulator^val)&0x80 != 0 && (accumulator^accumulator-val-1)&0x80 != 0
+		accumulator -= val - 1
 	} else {
-		accumulator += -val
-		// accumulator_add(-val)
+		cpu_status.carry_flag = !(accumulator-val-1 < -0xFF)
+		cpu_status.overflow_flag = (accumulator^val)&0x80 != 0 && (accumulator^accumulator-val)&0x80 != 0
+		accumulator -= val
 	}
-	cpu_status.carry_flag = accumulator&0b100000000 != 0
+	if accumulator < 0 {
+		accumulator += 256
+	}
 	cpu_status.zero_flag = accumulator == 0
 	cpu_status.negative_flag = accumulator&0b10000000 != 0
 }

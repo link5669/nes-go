@@ -1,6 +1,9 @@
 package main
 
-import "strconv"
+import (
+	"math/rand/v2"
+	"strconv"
+)
 
 type Memory struct {
 	zero_page         [0x0100 - 0x000]int
@@ -16,6 +19,10 @@ func (m *Memory) immediate_addr(mem_addr int) *int {
 }
 
 func (m *Memory) zero_page_addr(mem_addr int) *int {
+	if mem_addr == 0xFE {
+		var rand_num = rand.IntN(100)
+		return &rand_num
+	}
 	return &m.zero_page[mem_addr]
 }
 

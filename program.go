@@ -99,4 +99,5 @@ const (
 	//ILLEGAL OPCODES
 	ASO_cmd
 	RRA_cmd
+	SAX_cmd
 )
