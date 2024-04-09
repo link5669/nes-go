@@ -28,13 +28,15 @@ var const_head Const = Const{}
 
 var head Program_Code = Program_Code{}
 
-func accumulator_add(val int) {
-	if accumulator+val > 0xFF {
-		accumulator += val - 0x100
-	} else {
-		accumulator += val
-	}
-}
+// func accumulator_add(val int) bool {
+// 	if accumulator+val > 0xFF {
+// 		accumulator += val - 0x100
+// 		return true
+// 	} else {
+// 		accumulator += val
+// 		return false
+// 	}
+// }
 
 func string_to_int(str string) int {
 	split := strings.TrimPrefix(str, "#")
@@ -1238,9 +1240,9 @@ func run_program() {
 	cpu_status.interrupt_disable = true
 	i := 0
 	for ptr.next != nil {
-		// if ptr.index == 0xc75D {
-		// 	println("alksd")
-		// }
+		if ptr.index == 0xC94F {
+			println("alksd")
+		}
 		index := fmt.Sprintf("%x", ptr.index)
 		mem := fmt.Sprintf("%x", ptr.mem_1)
 		flags := 0
@@ -1268,7 +1270,7 @@ func run_program() {
 		}
 		run_tests(fmt.Sprint(strings.ToUpper(index), " ", printOpCode(ptr.op_code), " ", mem, " A:", strings.ToUpper(fmt.Sprintf("%x", accumulator)), " X:", strings.ToUpper(fmt.Sprintf("%x", register_x)), " Y:", strings.ToUpper(fmt.Sprintf("%x", register_y)), " P:", strings.ToUpper(fmt.Sprintf("%x", flags)), " SP:", strings.ToUpper(fmt.Sprintf("%x", stack_pointer)), " CYC:", cycles), i)
 		i++
-		if ptr.index >= 0xC949 {
+		if ptr.index >= 0xC9C3 {
 			break
 		}
 		cycles += ptr.cycles
@@ -1805,20 +1807,28 @@ func SEI() {
 
 func ADC(val int) {
 	if cpu_status.carry_flag {
-		accumulator_add(val + 1)
+		cpu_status.carry_flag = accumulator+val+1 > 0xFF
+		cpu_status.overflow_flag = (accumulator^val)&0x80 == 0 && (accumulator^accumulator+val+1)&0x80 != 0
+		accumulator += val + 1
 	} else {
-		accumulator_add(val)
+		cpu_status.carry_flag = accumulator+val > 0xFF
+		cpu_status.overflow_flag = (accumulator^val)&0x80 == 0 && (accumulator^accumulator+val)&0x80 != 0
+		accumulator += val
 	}
-	cpu_status.carry_flag = accumulator&0b100000000 != 0
+	if cpu_status.carry_flag {
+		accumulator -= 0x100
+	}
 	cpu_status.zero_flag = accumulator == 0
 	cpu_status.negative_flag = accumulator&0b10000000 != 0
 }
 
 func SBC(val int) {
 	if !cpu_status.carry_flag {
-		accumulator_add(-(val - 1))
+		accumulator += -(val - 1)
+		// accumulator_add(-(val - 1))
 	} else {
-		accumulator_add(-val)
+		accumulator += -val
+		// accumulator_add(-val)
 	}
 	cpu_status.carry_flag = accumulator&0b100000000 != 0
 	cpu_status.zero_flag = accumulator == 0
