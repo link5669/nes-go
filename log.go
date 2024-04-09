@@ -222,10 +222,12 @@ func dump_program() {
 	var ptr *Program_Code
 	ptr = &head
 	for ptr.next != nil {
+		index := fmt.Sprintf("%x", ptr.index)
 		if ptr.code_type == function_definition {
-			fmt.Println(ptr.index, ": ", printCodeType(ptr.code_type), ptr.destination)
+			fmt.Println(index, ": ", printCodeType(ptr.code_type), ptr.destination)
 		} else {
-			fmt.Println(ptr.index, ": ", printCodeType(ptr.code_type), printOpCode(ptr.op_code), printAddrModeType(ptr.addr_mode))
+			mem := fmt.Sprintf("%x", ptr.mem_1)
+			fmt.Println(index, ": ", printCodeType(ptr.code_type), printOpCode(ptr.op_code), printAddrModeType(ptr.addr_mode), mem)
 		}
 		ptr = ptr.next
 	}

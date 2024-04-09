@@ -3,11 +3,13 @@ package main
 type Program_Code struct {
 	code_type   code_type
 	op_code     Op_Code
+	cycles      int
 	index       int
 	next        *Program_Code
 	addr_mode   addr_mode
 	mem_1       int
 	destination string
+	addr_in_mem int
 }
 
 type addr_mode int
@@ -94,4 +96,7 @@ const (
 	TXA_cmd
 	TXS_cmd
 	TYA_cmd
+	//ILLEGAL OPCODES
+	ASO_cmd
+	RRA_cmd
 )

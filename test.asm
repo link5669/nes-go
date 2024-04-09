@@ -1,64 +1,43 @@
-define appleL         $00
-define appleH         $01
-define snakeHeadL     $10
-define snakeHeadH     $11
-define snakeBodyStart $12
-define snakeDirection $02
-define snakeLength    $03
-
-define movingUp      1
-define movingRight   2
-define movingDown    4
-define movingLeft    8
-
-define ASCII_w      $77
-define ASCII_a      $61
-define ASCII_s      $73
-define ASCII_d      $64
-
-define sysRandom    $fe
-define sysLastKey   $ff
-
-  jsr init
-  jsr loop
+jsr init
+jsr loop
 
 init:
   jsr initSnake
   jsr generateApplePosition
   rts
 
+generateApplePosition:
+  lda $fe
+  sta $00
+
+  lda $fe
+  and #$03 
+  clc
+  adc #2
+  sta $01
+  rts
+
 
 initSnake:
-  lda #movingRight
-  sta snakeDirection
+  lda #$2
+  sta $02
 
   lda #4
-  sta snakeLength
+  sta $03
   
   lda #$11
-  sta snakeHeadL
+  sta $10
   
   lda #$10
-  sta snakeBodyStart
+  sta $12
   
   lda #$0f
   sta $14
   
   lda #$04
-  sta snakeHeadH
+  sta $11
   sta $13 
   sta $15 
-  rts
-
-generateApplePosition:
-  lda sysRandom
-  sta appleL
-
-  lda sysRandom
-  and #$03 
-  clc
-  adc #2
-  sta appleH
   rts
 
 loop:
@@ -75,14 +54,14 @@ checkCollision:
   rts
 
 checkAppleCollision:
-  lda appleL
-  cmp snakeHeadL
+  lda $00
+  cmp $10
   bne doneCheckingAppleCollision
-  lda appleH
-  cmp snakeHeadH
+  lda $01
+  cmp $11
   bne doneCheckingAppleCollision
-  inc snakeLength
-  inc snakeLength ;increase length
+  inc $03
+  inc $03 ;increase length
   jsr generateApplePosition
 doneCheckingAppleCollision:
   rts
@@ -90,19 +69,19 @@ doneCheckingAppleCollision:
 checkSnakeCollision:
   ldx #2
 snakeCollisionLoop:
-  lda snakeHeadL,x
-  cmp snakeHeadL
+  lda $10,x
+  cmp $10
   bne continueCollisionLoop
 
 maybeCollided:
-  lda snakeHeadH,x
-  cmp snakeHeadH
+  lda $11,x
+  cmp $11
   beq didCollide
 
 continueCollisionLoop:
   inx
   inx
-  cpx snakeLength
+  cpx $03
   beq didntCollide
   jmp snakeCollisionLoop
 
@@ -112,16 +91,16 @@ didntCollide:
   rts
 
 updateSnake:
-  ldx snakeLength
+  ldx $03
   dex
   txa
 updateloop:
-  lda snakeHeadL,x
-  sta snakeBodyStart,x
+  lda $10,x
+  sta $12,x
   dex
   bpl updateloop
 
-  lda snakeDirection
+  lda $02
   lsr
   bcs up
   lsr
@@ -131,40 +110,40 @@ updateloop:
   lsr
   bcs left
 up:
-  lda snakeHeadL
+  lda $10
   sec
   sbc #$20
-  sta snakeHeadL
+  sta $10
   bcc upup
   rts
 upup:
-  dec snakeHeadH
+  dec $11
   lda #$1
-  cmp snakeHeadH
+  cmp $11
   beq collision
   rts
 right:
-  inc snakeHeadL
+  inc $10
   lda #$1f
-  bit snakeHeadL
+  bit $10
   beq collision
   rts
 down:
-  lda snakeHeadL
+  lda $10
   clc
   adc #$20
-  sta snakeHeadL
+  sta $10
   bcs downdown
   rts
 downdown:
-  inc snakeHeadH
+  inc $11
   lda #$6
-  cmp snakeHeadH
+  cmp $11
   beq collision
   rts
 left:
-  dec snakeHeadL
-  lda snakeHeadL
+  dec $10
+  lda $10
   and #$1f
   cmp #$1f
   beq collision
@@ -174,18 +153,18 @@ collision:
 
 drawApple:
   ldy #0
-  lda sysRandom
-  sta (appleL),y
+  lda $fe
+  sta ($00),y
   rts
 
 drawSnake:
-  ldx snakeLength
+  ldx $03
   lda #0
-  sta (snakeHeadL,x) 
+  sta ($10,x) 
 
   ldx #0
   lda #1
-  sta (snakeHeadL,x) 
+  sta ($10,x) 
   rts
 
 spinWheels:

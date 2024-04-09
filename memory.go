@@ -3,9 +3,9 @@ package main
 import "strconv"
 
 type Memory struct {
-	zero_page         [0x100]int
-	system_stack      [0x100]int
-	gen_memory        [0xF7FA]int
+	zero_page         [0x0100 - 0x000]int
+	system_stack      [0x0200 - 0x0100]int
+	gen_memory        [0xFFFA - 0x0200]int
 	interrupt_handler [0x2]int
 	power_reset       [0x2]int
 	interrupt_reset   [0x2]int
@@ -21,6 +21,7 @@ func (m *Memory) zero_page_addr(mem_addr int) *int {
 
 func (m *Memory) zero_page_x_addr(mem_addr int) *int {
 	if mem_addr+register_x > 0xff {
+		cycles += 2
 		return m.zero_page_x_addr(mem_addr - 0x100)
 	}
 	return &m.zero_page[mem_addr+register_x]
@@ -28,6 +29,7 @@ func (m *Memory) zero_page_x_addr(mem_addr int) *int {
 
 func (m *Memory) zero_page_y_addr(mem_addr int) *int {
 	if mem_addr+register_y > 0xff {
+		cycles += 2
 		return m.zero_page_y_addr(mem_addr - 0x100)
 	}
 	return &m.zero_page[mem_addr+register_y]
@@ -70,15 +72,28 @@ func (m *Memory) indirect(first_half string, second_half string) {
 }
 
 func (m *Memory) indexed_indirect_addr(val int) *int {
+	if val+register_x > 0xff {
+		cycles += 2
+		val -= 0x100
+	}
 	lower := strconv.FormatInt(int64(m.zero_page[val+register_x]), 16)
-	upper := strconv.FormatInt(int64(m.zero_page[val+register_x+1]), 16)
+	var upper string
+	if val == 0xff {
+		upper = strconv.FormatInt(int64(m.zero_page[register_x]), 16)
+		if m.zero_page[register_x] < 0x10 {
+			upper = "0" + upper
+		}
+	} else {
+		upper = strconv.FormatInt(int64(m.zero_page[val+register_x+1]), 16)
+		if m.zero_page[val+register_x+1] < 0x10 {
+			upper = "0" + upper
+		}
+	}
 	//hex <-> dec 0xa 0x10??
 	if m.zero_page[val+register_x] < 0x10 {
 		lower = "0" + lower
 	}
-	if m.zero_page[val+register_x+1] < 0x10 {
-		upper = "0" + upper
-	}
+
 	ret_val := string_to_int("$" + upper + lower)
 	return m.absolute_addr(ret_val)
 }
