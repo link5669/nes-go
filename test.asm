@@ -1,14 +1,15 @@
-Reset:
   jsr _func_8606       
   jsr _func_8638                 
 
 _func_8606:
-  jsr _func_860d              
+  jsr _func_860d
+  brk    
   jsr _func_862a                 
   rts                            
 
 _func_860d:
-  lda #$02                       
+  lda #$02       
+  brk                
   sta $02           
   lda #$06                       
   sta $03

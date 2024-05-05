@@ -8,6 +8,7 @@ func dump_contents() {
 	fmt.Println("Y Register:", register_y)
 	fmt.Println("Stack Pointer:", stack_pointer)
 	fmt.Println("Program Counter:", program_counter)
+	fmt.Println("Cycles:", cycles)
 	fmt.Println("\nFlag Status:")
 	fmt.Println("Program Counter:", cpu_status.carry_flag)
 	fmt.Println("Zero Flag:", cpu_status.zero_flag)

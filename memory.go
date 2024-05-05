@@ -1,7 +1,6 @@
 package main
 
 import (
-	"math/rand/v2"
 	"strconv"
 )
 
@@ -19,10 +18,6 @@ func (m *Memory) immediate_addr(mem_addr int) *int {
 }
 
 func (m *Memory) zero_page_addr(mem_addr int) *int {
-	if mem_addr == 0xFE {
-		var rand_num = rand.IntN(100)
-		return &rand_num
-	}
 	return &m.zero_page[mem_addr]
 }
 
