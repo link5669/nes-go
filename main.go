@@ -453,10 +453,8 @@ func LoadNESFile(path string) {
 
 	var ptr *Program_Code
 	ptr = &head
-	// var var_ptr *Const
-	// var_ptr = &const_head
 	i := 0
-	for program_counter = 0x8000; program_counter < 0x875F; program_counter++ {
+	for program_counter = 0x8000; program_counter < 0xBAFF; program_counter++ {
 		i++
 		ptr.index = program_counter
 		opcode := prg[program_counter-0x8000]
@@ -597,17 +595,17 @@ func LoadNESFile(path string) {
 		case 0x30:
 			ptr.op_code = BMI_cmd
 			program_counter++
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0x8000])) + ptr.index + 1
+			ptr.mem_1 = twos_compliment(int(prg[program_counter-0x8000])) + ptr.index + 2
 			ptr.cycles = 2
 		case 0xD0:
 			ptr.op_code = BNE_cmd
 			program_counter++
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0x8000])) + ptr.index + 1
+			ptr.mem_1 = twos_compliment(int(prg[program_counter-0x8000])) + ptr.index + 2
 			ptr.cycles = 2
 		case 0x10:
 			ptr.op_code = BPL_cmd
 			program_counter++
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0x8000])) + ptr.index + 1
+			ptr.mem_1 = twos_compliment(int(prg[program_counter-0x8000])) + ptr.index + 2
 			ptr.cycles = 2
 		case 0x00:
 			ptr.next = &Program_Code{}
@@ -618,12 +616,12 @@ func LoadNESFile(path string) {
 		case 0x50:
 			ptr.op_code = BVC_cmd
 			program_counter++
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0x8000])) + ptr.index + 1
+			ptr.mem_1 = twos_compliment(int(prg[program_counter-0x8000])) + ptr.index + 2
 			ptr.cycles = 2
 		case 0x70:
 			ptr.op_code = BVS_cmd
 			program_counter++
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0x8000])) + ptr.index + 1
+			ptr.mem_1 = twos_compliment(int(prg[program_counter-0x8000])) + ptr.index + 2
 			ptr.cycles = 2
 		case 0x18:
 			ptr.op_code = CLC_cmd
@@ -1278,6 +1276,9 @@ func run_program() {
 	i := 0
 
 	for ptr != nil {
+		if ptr.index == 0x8E1E {
+			dump_contents()
+		}
 		index := fmt.Sprintf("%x", ptr.index)
 		mem := fmt.Sprintf("%x", ptr.mem_1)
 		flags := 0
@@ -1303,11 +1304,10 @@ func run_program() {
 		if cpu_status.negative_flag {
 			flags += 128
 		}
-		run_tests(fmt.Sprint(strings.ToUpper(index), " ", printOpCode(ptr.op_code), " ", mem, " A:", strings.ToUpper(fmt.Sprintf("%x", accumulator)), " X:", strings.ToUpper(fmt.Sprintf("%x", register_x)), " Y:", strings.ToUpper(fmt.Sprintf("%x", register_y)), " P:", strings.ToUpper(fmt.Sprintf("%x", flags)), " SP:", strings.ToUpper(fmt.Sprintf("%x", stack_pointer)), " CYC:", cycles), i)
-		i++
-		if ptr.next == nil {
+		if run_tests(fmt.Sprint(strings.ToUpper(index), " ", printOpCode(ptr.op_code), " ", mem, " A:", strings.ToUpper(fmt.Sprintf("%x", accumulator)), " X:", strings.ToUpper(fmt.Sprintf("%x", register_x)), " Y:", strings.ToUpper(fmt.Sprintf("%x", register_y)), " P:", strings.ToUpper(fmt.Sprintf("%x", flags)), " SP:", strings.ToUpper(fmt.Sprintf("%x", stack_pointer)), " CYC:", cycles), i) {
 			break
 		}
+		i++
 		cycles += ptr.cycles
 		if ptr.code_type == function_definition {
 			//TODO
@@ -1601,10 +1601,12 @@ func STA(val *int) {
 }
 
 func STX(mem_addr *int) {
+	//need to wrap?
 	*mem_addr = register_x
 }
 
 func STY(mem_addr *int) {
+	//need to wrap?
 	*mem_addr = register_y
 }
 
@@ -1617,7 +1619,7 @@ func TAX() {
 func TAY() {
 	register_y = accumulator
 	cpu_status.zero_flag = register_y == 0
-	cpu_status.negative_flag = register_x&0b10000000 != 0
+	cpu_status.negative_flag = register_y&0b10000000 != 0
 }
 
 func TXA() {
@@ -1633,15 +1635,13 @@ func TYA() {
 }
 
 func TSX() {
-	register_x = memory.system_stack[stack_pointer]
+	register_x = stack_pointer
 	cpu_status.zero_flag = register_x == 0
 	cpu_status.negative_flag = register_x&0b10000000 != 0
 }
 
 func TXS() {
-	memory.system_stack[stack_pointer] = register_x
-	cpu_status.zero_flag = register_x == 0
-	cpu_status.negative_flag = register_x&0b10000000 != 0
+	stack_pointer = register_x
 }
 
 func CPX(val int) {
@@ -1738,12 +1738,18 @@ func BIT(val int) {
 
 func INX() {
 	register_x++
+	if register_x > 255 {
+		register_x -= 256
+	}
 	cpu_status.zero_flag = register_x == 0
 	cpu_status.negative_flag = register_x&0b10000000 != 0
 }
 
 func INY() {
 	register_y++
+	if register_y > 255 {
+		register_y -= 256
+	}
 	cpu_status.zero_flag = register_y == 0
 	cpu_status.negative_flag = register_y&0b10000000 != 0
 }
@@ -1771,6 +1777,9 @@ func DEX() {
 
 func DEY() {
 	register_y--
+	if register_y == -1 {
+		register_y = 0xff
+	}
 	cpu_status.zero_flag = register_y == 0
 	cpu_status.negative_flag = register_y&0b10000000 != 0
 }
@@ -1865,11 +1874,11 @@ func ADC(val int) {
 
 func SBC(val int) {
 	if !cpu_status.carry_flag {
-		cpu_status.carry_flag = !(accumulator-val-1 < -0xFF)
+		cpu_status.carry_flag = !(accumulator-val < 0)
 		cpu_status.overflow_flag = (accumulator^val)&0x80 != 0 && (accumulator^accumulator-val-1)&0x80 != 0
-		accumulator -= val - 1
+		accumulator -= val + 1
 	} else {
-		cpu_status.carry_flag = !(accumulator-val-1 < -0xFF)
+		cpu_status.carry_flag = !(accumulator-val < 0)
 		cpu_status.overflow_flag = (accumulator^val)&0x80 != 0 && (accumulator^accumulator-val)&0x80 != 0
 		accumulator -= val
 	}

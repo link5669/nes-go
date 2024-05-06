@@ -1,10 +1,4 @@
-package main
-
-import (
-	"strings"
-)
-
-var truth string = `C000  4C F5 C5  JMP $C5F5                       A:0 X:0 Y:0 P:24 SP:FD CYC:7
+C000  4C F5 C5  JMP $C5F5                       A:0 X:0 Y:0 P:24 SP:FD CYC:7
 C5F5  A2 00     LDX #$00                        A:0 X:0 Y:0 P:24 SP:FD CYC:10
 C5F7  86 00     STX $00 = 00                    A:0 X:0 Y:0 P:26 SP:FD CYC:12
 C5F9  86 10     STX $10 = 00                    A:0 X:0 Y:0 P:26 SP:FD CYC:15
@@ -8994,18 +8988,4 @@ C69A  8D 06 40  STA $4006 = FF                  A:FF X:FF Y:15 P:A5 SP:FB CYC:26
 C69D  A9 00     LDA #$00                        A:FF X:FF Y:15 P:A5 SP:FB CYC:26542
 C69F  8D 07 40  STA $4007 = FF                  A:0 X:FF Y:15 P:27 SP:FB CYC:26544
 C6A2  60        RTS                             A:0 X:FF Y:15 P:27 SP:FB CYC:26548
-C66E  60        RTS                             A:0 X:FF Y:15 P:27 SP:FD CYC:26554`
-var truth_arr []string = strings.Split(truth, "\n")
-
-func run_tests(in string, j int) bool {
-	truth_fields := strings.Fields(truth_arr[j])
-	test_fields := strings.Fields(in)
-	failed := false
-	for i := 0; i < 6; i++ {
-		if strings.TrimRight(truth_fields[len(truth_fields)-i-1], "0") != strings.TrimRight(test_fields[len(test_fields)-i-1], "0") {
-			println("\nDIFF:\noriginal", truth_arr[j], "\nyours:", in)
-			failed = true
-		}
-	}
-	return failed
-}
+C66E  60        RTS                             A:0 X:FF Y:15 P:27 SP:FD CYC:26554
