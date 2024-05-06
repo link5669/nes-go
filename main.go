@@ -1527,19 +1527,19 @@ func run_program() {
 					continue
 				}
 			case JSR_cmd:
-				stack_pointer--
 				lower := ptr.index & 0b11111111
 				upper := ptr.index >> 8
 				memory.system_stack[stack_pointer] = lower
 				stack_pointer--
 				memory.system_stack[stack_pointer] = upper
+				stack_pointer--
 				ptr = break_to(ptr.destination, ptr.mem_1, ptr.mem_1)
 				continue
 			case RTS_cmd:
+				stack_pointer++
 				upper := memory.system_stack[stack_pointer]
 				stack_pointer++
 				lower := memory.system_stack[stack_pointer]
-				stack_pointer++
 				last_index := upper << 8
 				last_index += lower
 				var local_ptr = &head
@@ -1685,23 +1685,24 @@ func PHP() {
 	if cpu_status.negative_flag {
 		store_status += 128
 	}
-	stack_pointer--
 	memory.system_stack[stack_pointer] = store_status
+	stack_pointer--
 }
 
 func PLA() {
-	accumulator = memory.system_stack[stack_pointer]
 	stack_pointer++
+	accumulator = memory.system_stack[stack_pointer]
 	cpu_status.zero_flag = accumulator == 0
 	cpu_status.negative_flag = accumulator&0b10000000 != 0
 }
 
 func PHA() {
-	stack_pointer--
 	memory.system_stack[stack_pointer] = accumulator
+	stack_pointer--
 }
 
 func PLP() {
+	stack_pointer++
 	cpu_status.carry_flag = memory.system_stack[stack_pointer]&0b00000001 != 0
 	cpu_status.zero_flag = memory.system_stack[stack_pointer]&0b00000010 != 0
 	cpu_status.interrupt_disable = memory.system_stack[stack_pointer]&0b00000100 != 0
@@ -1709,7 +1710,6 @@ func PLP() {
 	cpu_status.break_command = false
 	cpu_status.overflow_flag = memory.system_stack[stack_pointer]&0b01000000 != 0
 	cpu_status.negative_flag = memory.system_stack[stack_pointer]&0b10000000 != 0
-	stack_pointer++
 }
 
 func AND(val int) {
