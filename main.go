@@ -454,93 +454,94 @@ func LoadNESFile(path string) {
 	var ptr *Program_Code
 	ptr = &head
 	i := 0
-	for program_counter = 0x8000; program_counter < 0xBAFF; program_counter++ {
+	//need to start at C000
+	for program_counter = 0xC000; program_counter < 0xFABF; program_counter++ {
 		i++
 		ptr.index = program_counter
-		opcode := prg[program_counter-0x8000]
+		opcode := prg[program_counter-0xC000]
 		ptr.code_type = op_code
-		memory.gen_memory[program_counter-0x6000] = int(opcode)
-		ptr.addr_in_mem = program_counter - 0x6000
+		memory.gen_memory[program_counter-0xA000] = int(opcode)
+		ptr.addr_in_mem = program_counter - 0xA000
 		switch opcode {
 		case 0x69:
 			ptr.op_code = ADC_cmd
 			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 2
 		case 0x65:
 			ptr.op_code = ADC_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 3
 		case 0x75:
 			ptr.op_code = ADC_cmd
 			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 4
 		case 0x6D:
 			ptr.op_code = ADC_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0x7D:
 			ptr.op_code = ADC_cmd
 			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0x79:
 			ptr.op_code = ADC_cmd
 			ptr.addr_mode = absolute_y_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0x61:
 			ptr.op_code = ADC_cmd
 			ptr.addr_mode = indexed_indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 6
 		case 0x71:
 			ptr.op_code = ADC_cmd
 			ptr.addr_mode = indirect_indexed_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 5
 		case 0x29:
 			ptr.op_code = AND_cmd
 			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 2
 		case 0x25:
 			ptr.op_code = AND_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 3
 		case 0x35:
 			ptr.op_code = AND_cmd
 			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 4
 		case 0x2D:
 			ptr.op_code = AND_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0x3D:
 			ptr.op_code = AND_cmd
 			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0x39:
 			ptr.op_code = AND_cmd
 			ptr.addr_mode = absolute_y_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0x21:
 			ptr.op_code = AND_cmd
 			ptr.addr_mode = indexed_indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 6
 		case 0x31:
 			ptr.op_code = AND_cmd
 			ptr.addr_mode = indirect_indexed_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 5
 		case 0x0A:
 			ptr.op_code = ASL_cmd
@@ -549,63 +550,63 @@ func LoadNESFile(path string) {
 		case 0x06:
 			ptr.op_code = ASL_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 5
 		case 0x16:
 			ptr.op_code = ASL_cmd
 			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 6
 		case 0x0E:
 			ptr.op_code = ASL_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 6
 		case 0x1E:
 			ptr.op_code = ASL_cmd
 			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 7
 		case 0x90:
 			ptr.op_code = BCC_cmd
 			program_counter++
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0x8000])) + ptr.index + 2
+			ptr.mem_1 = twos_compliment(int(prg[program_counter-0xC000])) + ptr.index + 2
 			ptr.cycles = 2
 		case 0xB0:
 			ptr.op_code = BCS_cmd
 			program_counter++
 			//why +2????
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0x8000])) + ptr.index + 2
+			ptr.mem_1 = twos_compliment(int(prg[program_counter-0xC000])) + ptr.index + 2
 			ptr.cycles = 2
 		case 0xF0:
 			ptr.op_code = BEQ_cmd
 			program_counter++
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0x8000])) + ptr.index + 2
+			ptr.mem_1 = twos_compliment(int(prg[program_counter-0xC000])) + ptr.index + 2
 			ptr.cycles = 2
 		case 0x24:
 			ptr.op_code = BIT_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 3
 		case 0x2C:
 			ptr.op_code = BIT_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0x30:
 			ptr.op_code = BMI_cmd
 			program_counter++
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0x8000])) + ptr.index + 2
+			ptr.mem_1 = twos_compliment(int(prg[program_counter-0xC000])) + ptr.index + 2
 			ptr.cycles = 2
 		case 0xD0:
 			ptr.op_code = BNE_cmd
 			program_counter++
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0x8000])) + ptr.index + 2
+			ptr.mem_1 = twos_compliment(int(prg[program_counter-0xC000])) + ptr.index + 2
 			ptr.cycles = 2
 		case 0x10:
 			ptr.op_code = BPL_cmd
 			program_counter++
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0x8000])) + ptr.index + 2
+			ptr.mem_1 = twos_compliment(int(prg[program_counter-0xC000])) + ptr.index + 2
 			ptr.cycles = 2
 		case 0x00:
 			ptr.next = &Program_Code{}
@@ -616,12 +617,12 @@ func LoadNESFile(path string) {
 		case 0x50:
 			ptr.op_code = BVC_cmd
 			program_counter++
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0x8000])) + ptr.index + 2
+			ptr.mem_1 = twos_compliment(int(prg[program_counter-0xC000])) + ptr.index + 2
 			ptr.cycles = 2
 		case 0x70:
 			ptr.op_code = BVS_cmd
 			program_counter++
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0x8000])) + ptr.index + 2
+			ptr.mem_1 = twos_compliment(int(prg[program_counter-0xC000])) + ptr.index + 2
 			ptr.cycles = 2
 		case 0x18:
 			ptr.op_code = CLC_cmd
@@ -638,92 +639,92 @@ func LoadNESFile(path string) {
 		case 0xC9:
 			ptr.op_code = CMP_cmd
 			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 2
 		case 0xC5:
 			ptr.op_code = CMP_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 3
 		case 0xD5:
 			ptr.op_code = CMP_cmd
 			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 4
 		case 0xCD:
 			ptr.op_code = CMP_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0xDD:
 			ptr.op_code = CMP_cmd
 			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0xD9:
 			ptr.op_code = CMP_cmd
 			ptr.addr_mode = absolute_y_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0xC1:
 			ptr.op_code = CMP_cmd
 			ptr.addr_mode = indexed_indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 6
 		case 0xD1:
 			ptr.op_code = CMP_cmd
 			ptr.addr_mode = indirect_indexed_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 5
 		case 0xE0:
 			ptr.op_code = CPX_cmd
 			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 2
 		case 0xE4:
 			ptr.op_code = CPX_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 3
 		case 0xEC:
 			ptr.op_code = CPX_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0xC0:
 			ptr.op_code = CPY_cmd
 			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 2
 		case 0xC4:
 			ptr.op_code = CPY_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 3
 		case 0xCC:
 			ptr.op_code = CPY_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0xC6:
 			ptr.op_code = DEC_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 5
 		case 0xD6:
 			ptr.op_code = DEC_cmd
 			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 6
 		case 0xCE:
 			ptr.op_code = DEC_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 6
 		case 0xDE:
 			ptr.op_code = DEC_cmd
 			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 7
 		case 0xCA:
 			ptr.op_code = DEX_cmd
@@ -734,62 +735,62 @@ func LoadNESFile(path string) {
 		case 0x49:
 			ptr.op_code = EOR_cmd
 			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 2
 		case 0x45:
 			ptr.op_code = EOR_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 3
 		case 0x55:
 			ptr.op_code = EOR_cmd
 			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 4
 		case 0x4D:
 			ptr.op_code = EOR_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0x5D:
 			ptr.op_code = EOR_cmd
 			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0x59:
 			ptr.op_code = EOR_cmd
 			ptr.addr_mode = absolute_y_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0x41:
 			ptr.op_code = EOR_cmd
 			ptr.addr_mode = indexed_indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 6
 		case 0x51:
 			ptr.op_code = EOR_cmd
 			ptr.addr_mode = indirect_indexed_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 5
 		case 0xE6:
 			ptr.op_code = INC_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 5
 		case 0xF6:
 			ptr.op_code = INC_cmd
 			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 6
 		case 0xEE:
 			ptr.op_code = INC_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 6
 		case 0xFE:
 			ptr.op_code = INC_cmd
 			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 7
 		case 0xE8:
 			ptr.op_code = INX_cmd
@@ -800,131 +801,131 @@ func LoadNESFile(path string) {
 		case 0x4C:
 			ptr.op_code = JMP_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 3
 		case 0x6C:
 			ptr.op_code = JMP_cmd
 			ptr.addr_mode = indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 5
 		case 0x20:
 			ptr.op_code = JSR_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 6
 		case 0xA9:
 			ptr.op_code = LDA_cmd
 			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 2
 		case 0xA5:
 			ptr.op_code = LDA_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 3
 		case 0xB5:
 			ptr.op_code = LDA_cmd
 			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 4
 		case 0xAD:
 			ptr.op_code = LDA_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0xBD:
 			ptr.op_code = LDA_cmd
 			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0xB9:
 			ptr.op_code = LDA_cmd
 			ptr.addr_mode = absolute_y_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0xA1:
 			ptr.op_code = LDA_cmd
 			ptr.addr_mode = indexed_indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 6
 		case 0xB1:
 			ptr.op_code = LDA_cmd
 			ptr.addr_mode = indirect_indexed_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 5
 		case 0xA2:
 			ptr.op_code = LDX_cmd
 			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 2
 		case 0xA6:
 			ptr.op_code = LDX_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 3
 		case 0xB6:
 			ptr.op_code = LDX_cmd
 			ptr.addr_mode = zero_page_y_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 4
 		case 0xAE:
 			ptr.op_code = LDX_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0xBE:
 			ptr.op_code = LDX_cmd
 			ptr.addr_mode = absolute_y_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0xA0:
 			ptr.op_code = LDY_cmd
 			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 2
 		case 0xA4:
 			ptr.op_code = LDY_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 3
 		case 0xB4:
 			ptr.op_code = LDY_cmd
 			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 4
 		case 0xAC:
 			ptr.op_code = LDY_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0xBC:
 			ptr.op_code = LDY_cmd
 			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0x4A:
 			ptr.op_code = LSR_cmd
-			ptr.addr_mode = implicit_type
+			ptr.addr_mode = accumulator_type
 			ptr.cycles = 2
 		case 0x46:
 			ptr.op_code = LSR_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 5
 		case 0x56:
 			ptr.op_code = LSR_cmd
 			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 6
 		case 0x4E:
 			ptr.op_code = LSR_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 6
 		case 0x5E:
 			ptr.op_code = LSR_cmd
 			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 7
 		case 0xEA:
 			ptr.op_code = NOP_cmd
@@ -932,42 +933,42 @@ func LoadNESFile(path string) {
 		case 0x09:
 			ptr.op_code = ORA_cmd
 			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 2
 		case 0x05:
 			ptr.op_code = ORA_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 3
 		case 0x15:
 			ptr.op_code = ORA_cmd
 			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 4
 		case 0x0D:
 			ptr.op_code = ORA_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0x1D:
 			ptr.op_code = ORA_cmd
 			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0x19:
 			ptr.op_code = ORA_cmd
 			ptr.addr_mode = absolute_y_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0x01:
 			ptr.op_code = ORA_cmd
 			ptr.addr_mode = indexed_indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 6
 		case 0x11:
 			ptr.op_code = ORA_cmd
 			ptr.addr_mode = indirect_indexed_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 5
 		case 0x48:
 			ptr.op_code = PHA_cmd
@@ -983,55 +984,54 @@ func LoadNESFile(path string) {
 			ptr.cycles = 4
 		case 0x2A:
 			ptr.op_code = ROL_cmd
-			ptr.addr_mode = implicit_type
+			ptr.addr_mode = accumulator_type
 			ptr.cycles = 2
 		case 0x26:
 			ptr.op_code = ROL_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 5
 		case 0x36:
 			ptr.op_code = ROL_cmd
 			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 6
 		case 0x2E:
 			ptr.op_code = ROL_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 6
 		case 0x3E:
 			ptr.op_code = ROL_cmd
 			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 7
 		case 0x6A:
 			ptr.op_code = ROR_cmd
-			ptr.addr_mode = implicit_type
+			ptr.addr_mode = accumulator_type
 			ptr.cycles = 2
 		case 0x66:
 			ptr.op_code = ROR_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 5
 		case 0x76:
 			ptr.op_code = ROR_cmd
 			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 6
 		case 0x6E:
 			ptr.op_code = ROR_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 6
 		case 0x7E:
 			ptr.op_code = ROR_cmd
 			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 7
 		case 0x40:
 			ptr.op_code = RTI_cmd
-			println("IMPLEMENT RTI")
 			ptr.cycles = 6
 		case 0x60:
 			ptr.op_code = RTS_cmd
@@ -1039,42 +1039,42 @@ func LoadNESFile(path string) {
 		case 0xE9:
 			ptr.op_code = SBC_cmd
 			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 2
 		case 0xE5:
 			ptr.op_code = SBC_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 3
 		case 0xF5:
 			ptr.op_code = SBC_cmd
 			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 4
 		case 0xED:
 			ptr.op_code = SBC_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0xFD:
 			ptr.op_code = SBC_cmd
 			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0xF9:
 			ptr.op_code = SBC_cmd
 			ptr.addr_mode = absolute_y_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0xE1:
 			ptr.op_code = SBC_cmd
 			ptr.addr_mode = indexed_indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 6
 		case 0xF1:
 			ptr.op_code = SBC_cmd
 			ptr.addr_mode = indirect_indexed_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 5
 		case 0x38:
 			ptr.op_code = SEC_cmd
@@ -1088,67 +1088,67 @@ func LoadNESFile(path string) {
 		case 0x85:
 			ptr.op_code = STA_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 3
 		case 0x95:
 			ptr.op_code = STA_cmd
 			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 4
 		case 0x8D:
 			ptr.op_code = STA_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0x9D:
 			ptr.op_code = STA_cmd
 			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 5
 		case 0x99:
 			ptr.op_code = STA_cmd
 			ptr.addr_mode = absolute_y_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 5
 		case 0x81:
 			ptr.op_code = STA_cmd
 			ptr.addr_mode = indexed_indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 6
 		case 0x91:
 			ptr.op_code = STA_cmd
 			ptr.addr_mode = indirect_indexed_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 6
 		case 0x86:
 			ptr.op_code = STX_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 3
 		case 0x96:
 			ptr.op_code = STX_cmd
 			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 4
 		case 0x8E:
 			ptr.op_code = STX_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0x84:
 			ptr.op_code = STY_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 3
 		case 0x94:
 			ptr.op_code = STY_cmd
 			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 4
 		case 0x8C:
 			ptr.op_code = STY_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0xAA:
 			ptr.op_code = TAX_cmd
@@ -1173,56 +1173,56 @@ func LoadNESFile(path string) {
 			ptr.op_code = RRA_cmd
 			ptr.cycles = 5
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 		case 0x77:
 			ptr.op_code = RRA_cmd
 			ptr.cycles = 6
 			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 		case 0x6F:
 			ptr.op_code = RRA_cmd
 			ptr.cycles = 6
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 		case 0x7F:
 			ptr.op_code = RRA_cmd
 			ptr.cycles = 7
 			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 		case 0x7B:
 			ptr.op_code = RRA_cmd
 			ptr.cycles = 7
 			ptr.addr_mode = absolute_y_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 		case 0x63:
 			ptr.op_code = RRA_cmd
 			ptr.cycles = 8
 			ptr.addr_mode = indexed_indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 		case 0x73:
 			ptr.op_code = RRA_cmd
 			ptr.cycles = 8
 			ptr.addr_mode = indirect_indexed_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 		case 0x87:
 			ptr.op_code = SAX_cmd
 			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 3
 		case 0x97:
 			ptr.op_code = SAX_cmd
 			ptr.addr_mode = zero_page_y_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 4
 		case 0x8F:
 			ptr.op_code = SAX_cmd
 			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0x8000+1], prg[program_counter-0x8000+2])
+			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
 			ptr.cycles = 4
 		case 0x83:
 			ptr.op_code = SAX_cmd
 			ptr.addr_mode = indexed_indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0x8000+1])
+			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
 			ptr.cycles = 6
 		}
 		ptr.next = &Program_Code{}
@@ -1235,15 +1235,15 @@ func LoadNESFile(path string) {
 
 func single_addr(val byte) int {
 	program_counter += 1
-	memory.gen_memory[program_counter-0x6000] = int(val)
+	memory.gen_memory[program_counter-0xA000] = int(val)
 	return int(val)
 }
 
 func double_addr(first byte, second byte) int {
 	program_counter++
-	memory.gen_memory[program_counter-0x6000] = int(first)
+	memory.gen_memory[program_counter-0xA000] = int(first)
 	program_counter++
-	memory.gen_memory[program_counter-0x6000] = int(second)
+	memory.gen_memory[program_counter-0xA000] = int(second)
 	lower := fmt.Sprintf("%x", int(first))
 	upper := fmt.Sprintf("%x", int(second))
 	if first < 0x10 {
@@ -1253,9 +1253,6 @@ func double_addr(first byte, second byte) int {
 		upper = "0" + upper
 	}
 	ret_val := string_to_int("$" + upper + lower)
-	if ret_val >= 0xC000 {
-		ret_val -= (0xC000 - 0x8000)
-	}
 	return ret_val
 }
 
@@ -1269,6 +1266,33 @@ func main() {
 	}
 }
 
+func get_flag_sum() int {
+	flags := 0
+	if cpu_status.carry_flag {
+		flags += 1
+	}
+	if cpu_status.zero_flag {
+		flags += 2
+	}
+	if cpu_status.interrupt_disable {
+		flags += 4
+	}
+	if cpu_status.decimal_mode {
+		flags += 8
+	}
+	if cpu_status.break_command {
+		flags += 16
+	}
+	flags += 32
+	if cpu_status.overflow_flag {
+		flags += 64
+	}
+	if cpu_status.negative_flag {
+		flags += 128
+	}
+	return flags
+}
+
 func run_program() {
 	reset()
 	var ptr *Program_Code = &head
@@ -1276,35 +1300,12 @@ func run_program() {
 	i := 0
 
 	for ptr != nil {
-		if ptr.index == 0x8E1E {
+		if ptr.index == 0xCF26 {
 			dump_contents()
 		}
 		index := fmt.Sprintf("%x", ptr.index)
 		mem := fmt.Sprintf("%x", ptr.mem_1)
-		flags := 0
-		if cpu_status.carry_flag {
-			flags += 1
-		}
-		if cpu_status.zero_flag {
-			flags += 2
-		}
-		if cpu_status.interrupt_disable {
-			flags += 4
-		}
-		if cpu_status.decimal_mode {
-			flags += 8
-		}
-		if cpu_status.break_command {
-			flags += 16
-		}
-		flags += 32
-		if cpu_status.overflow_flag {
-			flags += 64
-		}
-		if cpu_status.negative_flag {
-			flags += 128
-		}
-		if run_tests(fmt.Sprint(strings.ToUpper(index), " ", printOpCode(ptr.op_code), " ", mem, " A:", strings.ToUpper(fmt.Sprintf("%x", accumulator)), " X:", strings.ToUpper(fmt.Sprintf("%x", register_x)), " Y:", strings.ToUpper(fmt.Sprintf("%x", register_y)), " P:", strings.ToUpper(fmt.Sprintf("%x", flags)), " SP:", strings.ToUpper(fmt.Sprintf("%x", stack_pointer)), " CYC:", cycles), i) {
+		if run_tests(fmt.Sprint(strings.ToUpper(index), " ", printOpCode(ptr.op_code), " ", mem, " A:", strings.ToUpper(fmt.Sprintf("%x", accumulator)), " X:", strings.ToUpper(fmt.Sprintf("%x", register_x)), " Y:", strings.ToUpper(fmt.Sprintf("%x", register_y)), " P:", strings.ToUpper(fmt.Sprintf("%x", get_flag_sum())), " SP:", strings.ToUpper(fmt.Sprintf("%x", stack_pointer)), " CYC:", cycles), i) {
 			break
 		}
 		i++
@@ -1387,23 +1388,15 @@ func run_program() {
 				AND(val)
 			case LSR_cmd:
 				//fix me!
-				if ptr.addr_mode == accumulator_type || ptr.addr_mode == implicit_type {
+				if ptr.addr_mode == accumulator_type {
 					LSR(&accumulator)
 				} else {
 					LSR(val_ptr)
 				}
 			case ROR_cmd:
-				if ptr.addr_mode == implicit_type {
-					ROR(&accumulator)
-				} else {
-					ROR(val_ptr)
-				}
+				ROR(val_ptr)
 			case ROL_cmd:
-				if ptr.addr_mode == implicit_type {
-					ROR(&accumulator)
-				} else {
-					ROR(val_ptr)
-				}
+				ROL(val_ptr)
 			case PLP_cmd:
 				PLP()
 			case PHP_cmd:
@@ -1458,6 +1451,23 @@ func run_program() {
 				STY(val_ptr)
 			case ADC_cmd:
 				ADC(val)
+			case RTI_cmd:
+				PLP()
+				stack_pointer++
+				lower := memory.system_stack[stack_pointer]
+				stack_pointer++
+				upper := memory.system_stack[stack_pointer]
+				last_index := upper << 8
+				last_index += lower
+				last_index -= 2
+				var local_ptr = &head
+				for local_ptr.next != nil {
+					if local_ptr.index == last_index {
+						ptr = local_ptr
+						break
+					}
+					local_ptr = local_ptr.next
+				}
 			case BNE_cmd:
 				if !cpu_status.zero_flag {
 					cycles++
@@ -1527,21 +1537,23 @@ func run_program() {
 					continue
 				}
 			case JSR_cmd:
-				lower := ptr.index & 0b11111111
-				upper := ptr.index >> 8
-				memory.system_stack[stack_pointer] = lower
-				stack_pointer--
+				next := ptr.index + 2
+				lower := next & 0b11111111
+				upper := next >> 8
 				memory.system_stack[stack_pointer] = upper
+				stack_pointer--
+				memory.system_stack[stack_pointer] = lower
 				stack_pointer--
 				ptr = break_to(ptr.destination, ptr.mem_1, ptr.mem_1)
 				continue
 			case RTS_cmd:
 				stack_pointer++
-				upper := memory.system_stack[stack_pointer]
-				stack_pointer++
 				lower := memory.system_stack[stack_pointer]
+				stack_pointer++
+				upper := memory.system_stack[stack_pointer]
 				last_index := upper << 8
 				last_index += lower
+				last_index -= 2
 				var local_ptr = &head
 				for local_ptr.next != nil {
 					if local_ptr.index == last_index {
@@ -1550,6 +1562,8 @@ func run_program() {
 					}
 					local_ptr = local_ptr.next
 				}
+			default:
+				print("instruction not implemented!")
 			}
 		}
 		ptr = ptr.next
@@ -1787,6 +1801,9 @@ func DEY() {
 func ASL(mem_addr *int) {
 	cpu_status.carry_flag = *mem_addr&0b10000000 != 0
 	*mem_addr = *mem_addr << 1
+	if *mem_addr > 255 {
+		*mem_addr -= 256
+	}
 	cpu_status.zero_flag = accumulator == 0
 	cpu_status.negative_flag = *mem_addr&0b10000000 != 0
 }
@@ -1795,8 +1812,10 @@ func LSR(addr *int) {
 	cpu_status.carry_flag = accumulator&0b00000001 != 0
 	if addr == nil {
 		accumulator = accumulator >> 1
+		cpu_status.zero_flag = accumulator == 0
 	} else {
 		*addr = *addr >> 1
+		cpu_status.zero_flag = accumulator == 0
 	}
 	cpu_status.negative_flag = accumulator&0b10000000 != 0
 }
@@ -1805,9 +1824,12 @@ func ROR(addr *int) {
 	temp := *addr
 	*addr = *addr >> 1
 	if cpu_status.carry_flag {
-		*addr |= 0b11111111
+		*addr |= 0b10000000
 	} else {
 		*addr &= 0b01111111
+	}
+	if *addr > 255 {
+		*addr -= 256
 	}
 	cpu_status.carry_flag = 0b00000001&temp != 0
 	cpu_status.zero_flag = accumulator == 0
@@ -1818,11 +1840,14 @@ func ROL(addr *int) {
 	temp := *addr
 	*addr = *addr << 1
 	if cpu_status.carry_flag {
-		*addr |= 0b11111111
+		*addr |= 0b00000001
 	} else {
-		*addr &= 0b01111111
+		*addr &= 0b11111110
 	}
-	cpu_status.carry_flag = 0b00000001&temp != 0
+	if *addr > 255 {
+		*addr -= 256
+	}
+	cpu_status.carry_flag = 0b10000000&temp != 0
 	cpu_status.zero_flag = accumulator == 0
 	cpu_status.negative_flag = 0b10000000&*addr != 0
 }
