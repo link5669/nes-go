@@ -358,7 +358,6 @@ func read_asm() {
 	}
 
 	dump_program()
-	run_program()
 	dump_contents()
 
 	if err := scanner.Err(); err != nil {
@@ -451,791 +450,764 @@ func LoadNESFile(path string) {
 		chr = make([]byte, 8192)
 	}
 
-	var ptr *Program_Code
-	ptr = &head
 	i := 0
-	//need to start at C000
-	for program_counter = 0xC000; program_counter < 0xFABF; program_counter++ {
+
+	for cnt := 0xC000; cnt < 0xFABF; cnt++ {
+		*memory.absolute_addr(cnt) = int(prg[cnt-0xC000])
+	}
+
+	reset()
+	cpu_status.interrupt_disable = true
+	program_counter = 0xC000
+	for {
+		if program_counter == 0xE3BD {
+			dump_contents()
+		}
+		index := fmt.Sprintf("%x", program_counter)
+		opcode := *memory.absolute_addr(program_counter)
+		if run_tests(fmt.Sprint(strings.ToUpper(index), " ", "opcode", " ", "mem", " A:", strings.ToUpper(fmt.Sprintf("%x", accumulator)), " X:", strings.ToUpper(fmt.Sprintf("%x", register_x)), " Y:", strings.ToUpper(fmt.Sprintf("%x", register_y)), " P:", strings.ToUpper(fmt.Sprintf("%x", get_flag_sum())), " SP:", strings.ToUpper(fmt.Sprintf("%x", stack_pointer)), " CYC:", cycles), i) {
+			break
+		}
 		i++
-		ptr.index = program_counter
-		opcode := prg[program_counter-0xC000]
-		ptr.code_type = op_code
-		memory.gen_memory[program_counter-0xA000] = int(opcode)
-		ptr.addr_in_mem = program_counter - 0xA000
+		// ptr.index = program_counter
+
 		switch opcode {
 		case 0x69:
-			ptr.op_code = ADC_cmd
-			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 2
+			ADC(single_addr(byte(*memory.absolute_addr(program_counter + 1))))
+			program_counter++
+			cycles += 2
 		case 0x65:
-			ptr.op_code = ADC_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 3
+			ADC(*memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 3
 		case 0x75:
-			ptr.op_code = ADC_cmd
-			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 4
+			ADC(*memory.zero_page_x_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 4
 		case 0x6D:
-			ptr.op_code = ADC_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			ADC(*memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0x7D:
-			ptr.op_code = ADC_cmd
-			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			ADC(*memory.absolute_x_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2))), true))
+			program_counter++
+			cycles += 4
 		case 0x79:
-			ptr.op_code = ADC_cmd
-			ptr.addr_mode = absolute_y_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			ADC(*memory.absolute_y_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0x61:
-			ptr.op_code = ADC_cmd
-			ptr.addr_mode = indexed_indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 6
+			ADC(*memory.indexed_indirect_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 6
 		case 0x71:
-			ptr.op_code = ADC_cmd
-			ptr.addr_mode = indirect_indexed_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 5
+			ADC(*memory.indirect_indexed_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 5
 		case 0x29:
-			ptr.op_code = AND_cmd
-			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 2
+			AND(single_addr(byte(*memory.absolute_addr(program_counter + 1))))
+			program_counter++
+			cycles += 2
 		case 0x25:
-			ptr.op_code = AND_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 3
+			AND(*memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 3
 		case 0x35:
-			ptr.op_code = AND_cmd
-			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 4
+			AND(*memory.zero_page_x_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 4
 		case 0x2D:
-			ptr.op_code = AND_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			AND(*memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0x3D:
-			ptr.op_code = AND_cmd
-			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			AND(*memory.absolute_x_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2))), true))
+			program_counter++
+			cycles += 4
 		case 0x39:
-			ptr.op_code = AND_cmd
-			ptr.addr_mode = absolute_y_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			AND(*memory.absolute_y_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0x21:
-			ptr.op_code = AND_cmd
-			ptr.addr_mode = indexed_indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 6
+			AND(*memory.indexed_indirect_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 6
 		case 0x31:
-			ptr.op_code = AND_cmd
-			ptr.addr_mode = indirect_indexed_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 5
+			AND(*memory.indirect_indexed_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 5
 		case 0x0A:
-			ptr.op_code = ASL_cmd
-			ptr.addr_mode = accumulator_type
-			ptr.cycles = 2
+			ASL(&accumulator)
+			program_counter++
+			cycles += 2
 		case 0x06:
-			ptr.op_code = ASL_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 5
+			ASL(memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 5
 		case 0x16:
-			ptr.op_code = ASL_cmd
-			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 6
+			ASL(memory.zero_page_x_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 6
 		case 0x0E:
-			ptr.op_code = ASL_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 6
+			ASL(memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 6
 		case 0x1E:
-			ptr.op_code = ASL_cmd
-			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 7
+			ASL(memory.absolute_x_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2))), false))
+			program_counter++
+			cycles += 7
 		case 0x90:
-			ptr.op_code = BCC_cmd
 			program_counter++
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0xC000])) + ptr.index + 2
-			ptr.cycles = 2
+			if !cpu_status.carry_flag {
+				cycles++
+				break_to("", twos_compliment(int(prg[program_counter-0xC000]))+program_counter+1, program_counter-0xA000)
+			} else {
+				program_counter++
+			}
+			cycles += 2
 		case 0xB0:
-			ptr.op_code = BCS_cmd
 			program_counter++
-			//why +2????
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0xC000])) + ptr.index + 2
-			ptr.cycles = 2
+			if cpu_status.carry_flag {
+				cycles++
+				break_to("", twos_compliment(int(prg[program_counter-0xC000]))+program_counter+1, program_counter-0xA000)
+			} else {
+				program_counter++
+			}
+			cycles += 2
 		case 0xF0:
-			ptr.op_code = BEQ_cmd
 			program_counter++
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0xC000])) + ptr.index + 2
-			ptr.cycles = 2
+			if cpu_status.zero_flag {
+				cycles++
+				break_to("", twos_compliment(int(prg[program_counter-0xC000]))+program_counter+1, program_counter-0xA000)
+			} else {
+				program_counter++
+			}
+			cycles += 2
 		case 0x24:
-			ptr.op_code = BIT_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 3
+			BIT(*memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 3
 		case 0x2C:
-			ptr.op_code = BIT_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			BIT(*memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0x30:
-			ptr.op_code = BMI_cmd
 			program_counter++
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0xC000])) + ptr.index + 2
-			ptr.cycles = 2
+			if cpu_status.negative_flag {
+				cycles++
+				break_to("", twos_compliment(int(prg[program_counter-0xC000]))+program_counter+1, program_counter-0xA000)
+			} else {
+				program_counter++
+			}
+			cycles += 2
 		case 0xD0:
-			ptr.op_code = BNE_cmd
 			program_counter++
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0xC000])) + ptr.index + 2
-			ptr.cycles = 2
+			if !cpu_status.zero_flag {
+				cycles++
+				break_to("", twos_compliment(int(prg[program_counter-0xC000]))+program_counter+1, program_counter-0xA000)
+			} else {
+				program_counter++
+			}
+			cycles += 2
 		case 0x10:
-			ptr.op_code = BPL_cmd
 			program_counter++
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0xC000])) + ptr.index + 2
-			ptr.cycles = 2
+			if !cpu_status.negative_flag {
+				cycles++
+				break_to("", twos_compliment(int(prg[program_counter-0xC000]))+program_counter+1, program_counter-0xA000)
+			} else {
+				program_counter++
+			}
+			cycles += 2
 		case 0x00:
-			ptr.next = &Program_Code{}
-			ptr = ptr.next
-			continue
-			// ptr.op_code = BRK_cmd
-			// ptr.cycles = 7
+			cpu_status.break_command = true
+			// cycles += 7
 		case 0x50:
-			ptr.op_code = BVC_cmd
 			program_counter++
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0xC000])) + ptr.index + 2
-			ptr.cycles = 2
+			if !cpu_status.overflow_flag {
+				cycles++
+				break_to("", twos_compliment(int(prg[program_counter-0xC000]))+program_counter+1, program_counter-0xA000)
+			} else {
+				program_counter++
+			}
+			cycles += 2
 		case 0x70:
-			ptr.op_code = BVS_cmd
 			program_counter++
-			ptr.mem_1 = twos_compliment(int(prg[program_counter-0xC000])) + ptr.index + 2
-			ptr.cycles = 2
+			if cpu_status.overflow_flag {
+				cycles++
+				break_to("", twos_compliment(int(prg[program_counter-0xC000]))+program_counter+1, program_counter-0xA000)
+			} else {
+				program_counter++
+			}
+			cycles += 2
 		case 0x18:
-			ptr.op_code = CLC_cmd
-			ptr.cycles = 2
+			CLC()
+			program_counter++
+			cycles += 2
 		case 0xD8:
-			ptr.op_code = CLD_cmd
-			ptr.cycles = 2
+			CLD()
+			program_counter++
+			cycles += 2
 		case 0x58:
-			ptr.op_code = CLI_cmd
-			ptr.cycles = 2
+			CLI()
+			program_counter++
+			cycles += 2
 		case 0xB8:
-			ptr.op_code = CLV_cmd
-			ptr.cycles = 2
+			CLV()
+			program_counter++
+			cycles += 2
 		case 0xC9:
-			ptr.op_code = CMP_cmd
-			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 2
+			CMP(single_addr(byte(*memory.absolute_addr(program_counter + 1))))
+			program_counter++
+			cycles += 2
 		case 0xC5:
-			ptr.op_code = CMP_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 3
+			CMP(*memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 3
 		case 0xD5:
-			ptr.op_code = CMP_cmd
-			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 4
+			CMP(*memory.zero_page_x_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 4
 		case 0xCD:
-			ptr.op_code = CMP_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			CMP(*memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0xDD:
-			ptr.op_code = CMP_cmd
-			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			CMP(*memory.absolute_x_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2))), true))
+			program_counter++
+			cycles += 4
 		case 0xD9:
-			ptr.op_code = CMP_cmd
-			ptr.addr_mode = absolute_y_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			CMP(*memory.absolute_y_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0xC1:
-			ptr.op_code = CMP_cmd
-			ptr.addr_mode = indexed_indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 6
+			CMP(*memory.indexed_indirect_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 6
 		case 0xD1:
-			ptr.op_code = CMP_cmd
-			ptr.addr_mode = indirect_indexed_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 5
+			CMP(*memory.indirect_indexed_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 5
 		case 0xE0:
-			ptr.op_code = CPX_cmd
-			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 2
+			CPX(single_addr(byte(*memory.absolute_addr(program_counter + 1))))
+			program_counter++
+			cycles += 2
 		case 0xE4:
-			ptr.op_code = CPX_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 3
+			CPX(*memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 3
 		case 0xEC:
-			ptr.op_code = CPX_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			CPX(*memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0xC0:
-			ptr.op_code = CPY_cmd
-			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 2
+			CPY(single_addr(byte(*memory.absolute_addr(program_counter + 1))))
+			program_counter++
+			cycles += 2
 		case 0xC4:
-			ptr.op_code = CPY_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 3
+			CPY(*memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 3
 		case 0xCC:
-			ptr.op_code = CPY_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			CPY(*memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0xC6:
-			ptr.op_code = DEC_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 5
+			DEC(memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 5
 		case 0xD6:
-			ptr.op_code = DEC_cmd
-			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 6
+			DEC(memory.zero_page_x_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 6
 		case 0xCE:
-			ptr.op_code = DEC_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 6
+			DEC(memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 6
 		case 0xDE:
-			ptr.op_code = DEC_cmd
-			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 7
+			DEC(memory.absolute_x_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2))), false))
+			program_counter++
+			cycles += 7
 		case 0xCA:
-			ptr.op_code = DEX_cmd
-			ptr.cycles = 2
+			DEX()
+			program_counter++
+			cycles += 2
 		case 0x88:
-			ptr.op_code = DEY_cmd
-			ptr.cycles = 2
+			DEY()
+			program_counter++
+			cycles += 2
 		case 0x49:
-			ptr.op_code = EOR_cmd
-			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 2
+			EOR(single_addr(byte(*memory.absolute_addr(program_counter + 1))))
+			program_counter++
+			cycles += 2
 		case 0x45:
-			ptr.op_code = EOR_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 3
+			EOR(*memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 3
 		case 0x55:
-			ptr.op_code = EOR_cmd
-			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 4
+			EOR(*memory.zero_page_x_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 4
 		case 0x4D:
-			ptr.op_code = EOR_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			EOR(*memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0x5D:
-			ptr.op_code = EOR_cmd
-			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			EOR(*memory.absolute_x_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2))), true))
+			program_counter++
+			cycles += 4
 		case 0x59:
-			ptr.op_code = EOR_cmd
-			ptr.addr_mode = absolute_y_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			EOR(*memory.absolute_y_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0x41:
-			ptr.op_code = EOR_cmd
-			ptr.addr_mode = indexed_indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 6
+			EOR(*memory.indexed_indirect_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 6
 		case 0x51:
-			ptr.op_code = EOR_cmd
-			ptr.addr_mode = indirect_indexed_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 5
+			EOR(*memory.indirect_indexed_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 5
 		case 0xE6:
-			ptr.op_code = INC_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 5
+			INC(memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 5
 		case 0xF6:
-			ptr.op_code = INC_cmd
-			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 6
+			INC(memory.zero_page_x_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 6
 		case 0xEE:
-			ptr.op_code = INC_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 6
+			INC(memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 6
 		case 0xFE:
-			ptr.op_code = INC_cmd
-			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 7
+			INC(memory.absolute_x_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2))), false))
+			program_counter++
+			cycles += 7
 		case 0xE8:
-			ptr.op_code = INX_cmd
-			ptr.cycles = 2
+			INX()
+			program_counter++
+			cycles += 2
 		case 0xC8:
-			ptr.op_code = INY_cmd
-			ptr.cycles = 2
+			INY()
+			program_counter++
+			cycles += 2
 		case 0x4C:
-			ptr.op_code = JMP_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 3
+			dest := double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))
+			break_to("", dest, dest)
+			cycles += 3
 		case 0x6C:
-			ptr.op_code = JMP_cmd
-			ptr.addr_mode = indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 5
+			mem_addr := double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))
+			upper_mem := mem_addr + 1
+			if mem_addr&0b11111111 == 0xFF {
+				upper_mem = mem_addr & 0b1111111100000000
+			}
+			lower := (*memory.absolute_addr(mem_addr))
+			upper := (*memory.absolute_addr(upper_mem))
+			loc := upper << 8
+			loc += lower
+			break_to("", loc, loc)
+			cycles += 5
 		case 0x20:
-			ptr.op_code = JSR_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 6
+			next := program_counter + 2
+			lower := next & 0b11111111
+			upper := next >> 8
+			memory.system_stack[stack_pointer] = upper
+			stack_pointer--
+			memory.system_stack[stack_pointer] = lower
+			stack_pointer--
+			dest := double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))
+			break_to("", dest, dest)
+			cycles += 6
 		case 0xA9:
-			ptr.op_code = LDA_cmd
-			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 2
+			LDA(single_addr(byte(*memory.absolute_addr(program_counter + 1))))
+			program_counter++
+			cycles += 2
 		case 0xA5:
-			ptr.op_code = LDA_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 3
+			LDA(*memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 3
 		case 0xB5:
-			ptr.op_code = LDA_cmd
-			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 4
+			LDA(*memory.zero_page_x_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 4
 		case 0xAD:
-			ptr.op_code = LDA_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			LDA(*memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0xBD:
-			ptr.op_code = LDA_cmd
-			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			LDA(*memory.absolute_x_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2))), true))
+			program_counter++
+			cycles += 4
 		case 0xB9:
-			ptr.op_code = LDA_cmd
-			ptr.addr_mode = absolute_y_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			LDA(*memory.absolute_y_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0xA1:
-			ptr.op_code = LDA_cmd
-			ptr.addr_mode = indexed_indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 6
+			LDA(*memory.indexed_indirect_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 6
 		case 0xB1:
-			ptr.op_code = LDA_cmd
-			ptr.addr_mode = indirect_indexed_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 5
+			LDA(*memory.indirect_indexed_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 5
 		case 0xA2:
-			ptr.op_code = LDX_cmd
-			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 2
+			LDX(single_addr(byte(*memory.absolute_addr(program_counter + 1))))
+			program_counter++
+			cycles += 2
 		case 0xA6:
-			ptr.op_code = LDX_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 3
+			LDX(*memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 3
 		case 0xB6:
-			ptr.op_code = LDX_cmd
-			ptr.addr_mode = zero_page_y_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 4
+			LDX(*memory.zero_page_y_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 4
 		case 0xAE:
-			ptr.op_code = LDX_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			LDX(*memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0xBE:
-			ptr.op_code = LDX_cmd
-			ptr.addr_mode = absolute_y_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			LDX(*memory.absolute_y_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0xA0:
-			ptr.op_code = LDY_cmd
-			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 2
+			LDY(single_addr(byte(*memory.absolute_addr(program_counter + 1))))
+			program_counter++
+			cycles += 2
 		case 0xA4:
-			ptr.op_code = LDY_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 3
+			LDY(*memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 3
 		case 0xB4:
-			ptr.op_code = LDY_cmd
-			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 4
+			LDY(*memory.zero_page_x_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 4
 		case 0xAC:
-			ptr.op_code = LDY_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			LDY(*memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0xBC:
-			ptr.op_code = LDY_cmd
-			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			LDY(*memory.absolute_x_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2))), true))
+			program_counter++
+			cycles += 4
 		case 0x4A:
-			ptr.op_code = LSR_cmd
-			ptr.addr_mode = accumulator_type
-			ptr.cycles = 2
+			LSR(&accumulator)
+			program_counter++
+			cycles += 2
 		case 0x46:
-			ptr.op_code = LSR_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 5
+			LSR(memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 5
 		case 0x56:
-			ptr.op_code = LSR_cmd
-			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 6
+			LSR(memory.zero_page_x_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 6
 		case 0x4E:
-			ptr.op_code = LSR_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 6
+			LSR(memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 6
 		case 0x5E:
-			ptr.op_code = LSR_cmd
-			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 7
+			LSR(memory.absolute_x_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2))), false))
+			program_counter++
+			cycles += 7
 		case 0xEA:
-			ptr.op_code = NOP_cmd
-			ptr.cycles = 2
+			time.Sleep(5 * time.Microsecond)
+			program_counter++
+			cycles += 2
 		case 0x09:
-			ptr.op_code = ORA_cmd
-			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 2
+			ORA(single_addr(byte(*memory.absolute_addr(program_counter + 1))))
+			program_counter++
+			cycles += 2
 		case 0x05:
-			ptr.op_code = ORA_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 3
+			ORA(*memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 3
 		case 0x15:
-			ptr.op_code = ORA_cmd
-			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 4
+			ORA(*memory.zero_page_x_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 4
 		case 0x0D:
-			ptr.op_code = ORA_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			ORA(*memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0x1D:
-			ptr.op_code = ORA_cmd
-			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			ORA(*memory.absolute_x_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2))), true))
+			program_counter++
+			cycles += 4
 		case 0x19:
-			ptr.op_code = ORA_cmd
-			ptr.addr_mode = absolute_y_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			ORA(*memory.absolute_y_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0x01:
-			ptr.op_code = ORA_cmd
-			ptr.addr_mode = indexed_indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 6
+			ORA(*memory.indexed_indirect_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 6
 		case 0x11:
-			ptr.op_code = ORA_cmd
-			ptr.addr_mode = indirect_indexed_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 5
+			ORA(*memory.indirect_indexed_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 5
 		case 0x48:
-			ptr.op_code = PHA_cmd
-			ptr.cycles = 3
+			PHA()
+			program_counter++
+			cycles += 3
 		case 0x08:
-			ptr.op_code = PHP_cmd
-			ptr.cycles = 3
+			PHP()
+			program_counter++
+			cycles += 3
 		case 0x68:
-			ptr.op_code = PLA_cmd
-			ptr.cycles = 4
+			PLA()
+			program_counter++
+			cycles += 4
 		case 0x28:
-			ptr.op_code = PLP_cmd
-			ptr.cycles = 4
+			PLP()
+			program_counter++
+			cycles += 4
 		case 0x2A:
-			ptr.op_code = ROL_cmd
-			ptr.addr_mode = accumulator_type
-			ptr.cycles = 2
+			ROL(&accumulator)
+			program_counter++
+			cycles += 2
 		case 0x26:
-			ptr.op_code = ROL_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 5
+			ROL(memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 5
 		case 0x36:
-			ptr.op_code = ROL_cmd
-			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 6
+			ROL(memory.zero_page_x_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 6
 		case 0x2E:
-			ptr.op_code = ROL_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 6
+			ROL(memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 6
 		case 0x3E:
-			ptr.op_code = ROL_cmd
-			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 7
+			ROL(memory.absolute_x_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2))), false))
+			program_counter++
+			cycles += 7
 		case 0x6A:
-			ptr.op_code = ROR_cmd
-			ptr.addr_mode = accumulator_type
-			ptr.cycles = 2
+			ROR(&accumulator)
+			program_counter++
+			cycles += 2
 		case 0x66:
-			ptr.op_code = ROR_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 5
+			ROR(memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 5
 		case 0x76:
-			ptr.op_code = ROR_cmd
-			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 6
+			ROR(memory.zero_page_x_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 6
 		case 0x6E:
-			ptr.op_code = ROR_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 6
+			ROR(memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 6
 		case 0x7E:
-			ptr.op_code = ROR_cmd
-			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 7
+			ROR(memory.absolute_x_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2))), false))
+			program_counter++
+			cycles += 7
 		case 0x40:
-			ptr.op_code = RTI_cmd
-			ptr.cycles = 6
+			PLP()
+			stack_pointer++
+			lower := memory.system_stack[stack_pointer]
+			stack_pointer++
+			upper := memory.system_stack[stack_pointer]
+			last_index := upper << 8
+			last_index += lower
+			program_counter = last_index
+			cycles += 6
 		case 0x60:
-			ptr.op_code = RTS_cmd
-			ptr.cycles = 6
+			stack_pointer++
+			lower := memory.system_stack[stack_pointer]
+			stack_pointer++
+			upper := memory.system_stack[stack_pointer]
+			last_index := upper << 8
+			last_index += lower
+			// last_index -= 2
+			program_counter = last_index
+			program_counter++
+			cycles += 6
 		case 0xE9:
-			ptr.op_code = SBC_cmd
-			ptr.addr_mode = immediate_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 2
+			SBC(single_addr(byte(*memory.absolute_addr(program_counter + 1))))
+			program_counter++
+			cycles += 2
 		case 0xE5:
-			ptr.op_code = SBC_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 3
+			SBC(*memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 3
 		case 0xF5:
-			ptr.op_code = SBC_cmd
-			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 4
+			SBC(*memory.zero_page_x_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 4
 		case 0xED:
-			ptr.op_code = SBC_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			SBC(*memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0xFD:
-			ptr.op_code = SBC_cmd
-			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			SBC(*memory.absolute_x_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2))), true))
+			program_counter++
+			cycles += 4
 		case 0xF9:
-			ptr.op_code = SBC_cmd
-			ptr.addr_mode = absolute_y_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			SBC(*memory.absolute_y_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0xE1:
-			ptr.op_code = SBC_cmd
-			ptr.addr_mode = indexed_indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 6
+			SBC(*memory.indexed_indirect_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 6
 		case 0xF1:
-			ptr.op_code = SBC_cmd
-			ptr.addr_mode = indirect_indexed_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 5
+			SBC(*memory.indirect_indexed_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 5
 		case 0x38:
-			ptr.op_code = SEC_cmd
-			ptr.cycles = 2
+			SEC()
+			program_counter++
+			cycles += 2
 		case 0xF8:
-			ptr.op_code = SED_cmd
-			ptr.cycles = 2
+			SED()
+			program_counter++
+			cycles += 2
 		case 0x78:
-			ptr.op_code = SEI_cmd
-			ptr.cycles = 2
+			SEI()
+			program_counter++
+			cycles += 2
 		case 0x85:
-			ptr.op_code = STA_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 3
+			STA(memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 3
 		case 0x95:
-			ptr.op_code = STA_cmd
-			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 4
+			STA(memory.zero_page_x_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 4
 		case 0x8D:
-			ptr.op_code = STA_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			STA(memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0x9D:
-			ptr.op_code = STA_cmd
-			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 5
+			STA(memory.absolute_x_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2))), false))
+			program_counter++
+			cycles += 5
 		case 0x99:
-			ptr.op_code = STA_cmd
-			ptr.addr_mode = absolute_y_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 5
+			STA(memory.absolute_y_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 5
 		case 0x81:
-			ptr.op_code = STA_cmd
-			ptr.addr_mode = indexed_indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 6
+			STA(memory.indexed_indirect_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 6
 		case 0x91:
-			ptr.op_code = STA_cmd
-			ptr.addr_mode = indirect_indexed_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 6
+			STA(memory.indirect_indexed_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 6
 		case 0x86:
-			ptr.op_code = STX_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 3
+			STX(memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 3
 		case 0x96:
-			ptr.op_code = STX_cmd
-			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 4
+			STX(memory.zero_page_y_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 4
 		case 0x8E:
-			ptr.op_code = STX_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			STX(memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0x84:
-			ptr.op_code = STY_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 3
+			STY(memory.zero_page_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 3
 		case 0x94:
-			ptr.op_code = STY_cmd
-			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 4
+			STY(memory.zero_page_x_addr(single_addr(byte(*memory.absolute_addr(program_counter + 1)))))
+			program_counter++
+			cycles += 4
 		case 0x8C:
-			ptr.op_code = STY_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
+			STY(memory.absolute_addr(double_addr(byte(*memory.absolute_addr(program_counter + 1)), byte(*memory.absolute_addr(program_counter + 2)))))
+			program_counter++
+			cycles += 4
 		case 0xAA:
-			ptr.op_code = TAX_cmd
-			ptr.cycles = 2
+			TAX()
+			program_counter++
+			cycles += 2
 		case 0xA8:
-			ptr.op_code = TAY_cmd
-			ptr.cycles = 2
+			TAY()
+			program_counter++
+			cycles += 2
 		case 0xBA:
-			ptr.op_code = TSX_cmd
-			ptr.cycles = 2
+			TSX()
+			program_counter++
+			cycles += 2
 		case 0x8A:
-			ptr.op_code = TXA_cmd
-			ptr.cycles = 2
+			TXA()
+			program_counter++
+			cycles += 2
 		case 0x9A:
-			ptr.op_code = TXS_cmd
-			ptr.cycles = 2
+			TXS()
+			program_counter++
+			cycles += 2
 		case 0x98:
-			ptr.op_code = TYA_cmd
-			ptr.cycles = 2
-		//ILLEGAL OPCODES
-		case 0x67:
-			ptr.op_code = RRA_cmd
-			ptr.cycles = 5
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-		case 0x77:
-			ptr.op_code = RRA_cmd
-			ptr.cycles = 6
-			ptr.addr_mode = zero_page_x_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-		case 0x6F:
-			ptr.op_code = RRA_cmd
-			ptr.cycles = 6
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-		case 0x7F:
-			ptr.op_code = RRA_cmd
-			ptr.cycles = 7
-			ptr.addr_mode = absolute_x_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-		case 0x7B:
-			ptr.op_code = RRA_cmd
-			ptr.cycles = 7
-			ptr.addr_mode = absolute_y_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-		case 0x63:
-			ptr.op_code = RRA_cmd
-			ptr.cycles = 8
-			ptr.addr_mode = indexed_indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-		case 0x73:
-			ptr.op_code = RRA_cmd
-			ptr.cycles = 8
-			ptr.addr_mode = indirect_indexed_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-		case 0x87:
-			ptr.op_code = SAX_cmd
-			ptr.addr_mode = zero_page_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 3
-		case 0x97:
-			ptr.op_code = SAX_cmd
-			ptr.addr_mode = zero_page_y_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 4
-		case 0x8F:
-			ptr.op_code = SAX_cmd
-			ptr.addr_mode = absolute_type
-			ptr.mem_1 = double_addr(prg[program_counter-0xC000+1], prg[program_counter-0xC000+2])
-			ptr.cycles = 4
-		case 0x83:
-			ptr.op_code = SAX_cmd
-			ptr.addr_mode = indexed_indirect_type
-			ptr.mem_1 = single_addr(prg[program_counter-0xC000+1])
-			ptr.cycles = 6
+			TYA()
+			program_counter++
+			cycles += 2
+			//ILLEGAL OPCODES
+			// case 0x67:
+			// 	ptr.op_code = RRA_cmd
+			// 	cycles += 5
+			// 	ptr.addr_mode = zero_page_type
+			// 	ptr.mem_1 = single_addr(byte(*memory.absolute_addr(program_counter+1)))
+			// case 0x77:
+			// 	ptr.op_code = RRA_cmd
+			// 	cycles += 6
+			// 	ptr.addr_mode = zero_page_x_type
+			// 	ptr.mem_1 = single_addr(byte(*memory.absolute_addr(program_counter+1)))
+			// case 0x6F:
+			// 	ptr.op_code = RRA_cmd
+			// 	cycles += 6
+			// 	ptr.addr_mode = absolute_type
+			// 	ptr.mem_1 = double_addr(byte(*memory.absolute_addr(program_counter+1)), byte(*memory.absolute_addr(program_counter+2)))
+			// case 0x7F:
+			// 	ptr.op_code = RRA_cmd
+			// 	ptr.cycles = 7
+			// 	ptr.addr_mode = absolute_x_type
+			// 	ptr.mem_1 = double_addr(byte(*memory.absolute_addr(program_counter+1)), byte(*memory.absolute_addr(program_counter+2)))
+			// case 0x7B:
+			// 	ptr.op_code = RRA_cmd
+			// 	ptr.cycles = 7
+			// 	ptr.addr_mode = absolute_y_type
+			// 	ptr.mem_1 = double_addr(byte(*memory.absolute_addr(program_counter+1)), byte(*memory.absolute_addr(program_counter+2)))
+			// case 0x63:
+			// 	ptr.op_code = RRA_cmd
+			// 	ptr.cycles = 8
+			// 	ptr.addr_mode = indexed_indirect_type
+			// 	ptr.mem_1 = single_addr(byte(*memory.absolute_addr(program_counter+1)))
+			// case 0x73:
+			// 	ptr.op_code = RRA_cmd
+			// 	ptr.cycles = 8
+			// 	ptr.addr_mode = indirect_indexed_type
+			// 	ptr.mem_1 = single_addr(byte(*memory.absolute_addr(program_counter+1)))
+			// case 0x87:
+			// 	ptr.op_code = SAX_cmd
+			// 	ptr.addr_mode = zero_page_type
+			// 	ptr.mem_1 = single_addr(byte(*memory.absolute_addr(program_counter+1)))
+			// 	cycles += 3
+			// case 0x97:
+			// 	ptr.op_code = SAX_cmd
+			// 	ptr.addr_mode = zero_page_y_type
+			// 	ptr.mem_1 = single_addr(byte(*memory.absolute_addr(program_counter+1)))
+			// 	cycles += 4
+			// case 0x8F:
+			// 	ptr.op_code = SAX_cmd
+			// 	ptr.addr_mode = absolute_type
+			// 	ptr.mem_1 = double_addr(byte(*memory.absolute_addr(program_counter+1)), byte(*memory.absolute_addr(program_counter+2)))
+			// 	cycles += 4
+			// case 0x83:
+			// 	ptr.op_code = SAX_cmd
+			// 	ptr.addr_mode = indexed_indirect_type
+			// 	ptr.mem_1 = single_addr(byte(*memory.absolute_addr(program_counter+1)))
+			// 	cycles += 6
 		}
-		ptr.next = &Program_Code{}
-		ptr = ptr.next
 	}
-	dump_program()
-	run_program()
+	// dump_program()
 	dump_contents()
 }
 
 func single_addr(val byte) int {
 	program_counter += 1
-	memory.gen_memory[program_counter-0xA000] = int(val)
+	// memory.gen_memory[program_counter-0xA000] = int(val)
 	return int(val)
 }
 
@@ -1293,299 +1265,14 @@ func get_flag_sum() int {
 	return flags
 }
 
-func run_program() {
-	reset()
-	var ptr *Program_Code = &head
-	cpu_status.interrupt_disable = true
-	i := 0
-
-	for ptr != nil {
-		if ptr.index == 0xCF26 {
-			dump_contents()
-		}
-		index := fmt.Sprintf("%x", ptr.index)
-		mem := fmt.Sprintf("%x", ptr.mem_1)
-		if run_tests(fmt.Sprint(strings.ToUpper(index), " ", printOpCode(ptr.op_code), " ", mem, " A:", strings.ToUpper(fmt.Sprintf("%x", accumulator)), " X:", strings.ToUpper(fmt.Sprintf("%x", register_x)), " Y:", strings.ToUpper(fmt.Sprintf("%x", register_y)), " P:", strings.ToUpper(fmt.Sprintf("%x", get_flag_sum())), " SP:", strings.ToUpper(fmt.Sprintf("%x", stack_pointer)), " CYC:", cycles), i) {
-			break
-		}
-		i++
-		cycles += ptr.cycles
-		if ptr.code_type == function_definition {
-			//TODO
-		} else {
-			var val int
-			var val_ptr *int
-			if ptr.addr_mode == immediate_type {
-				val = ptr.mem_1
-			} else if ptr.addr_mode == zero_page_type {
-				val = *memory.zero_page_addr(ptr.mem_1)
-			} else if ptr.addr_mode == zero_page_x_type {
-				val = (*memory.zero_page_x_addr(ptr.mem_1))
-			} else if ptr.addr_mode == zero_page_y_type {
-				val = (*memory.zero_page_y_addr(ptr.mem_1))
-			} else if ptr.addr_mode == absolute_type {
-				val = (*memory.absolute_addr(ptr.mem_1))
-			} else if ptr.addr_mode == absolute_x_type {
-				val = (*memory.absolute_x_addr(ptr.mem_1))
-			} else if ptr.addr_mode == absolute_y_type {
-				val = (*memory.absolute_y_addr(ptr.mem_1))
-			} else if ptr.addr_mode == indexed_indirect_type {
-				val = (*memory.indexed_indirect_addr(ptr.mem_1))
-			} else if ptr.addr_mode == indirect_indexed_type {
-				val = (*memory.indirect_indexed_addr(ptr.mem_1))
-			}
-			if ptr.addr_mode == zero_page_type {
-				val_ptr = (memory.zero_page_addr(ptr.mem_1))
-			} else if ptr.addr_mode == zero_page_x_type {
-				val_ptr = (memory.zero_page_x_addr(ptr.mem_1))
-			} else if ptr.addr_mode == zero_page_y_type {
-				val_ptr = (memory.zero_page_y_addr(ptr.mem_1))
-			} else if ptr.addr_mode == absolute_type {
-				val_ptr = (memory.absolute_addr(ptr.mem_1))
-			} else if ptr.addr_mode == absolute_x_type {
-				val_ptr = (memory.absolute_x_addr(ptr.mem_1))
-			} else if ptr.addr_mode == absolute_y_type {
-				val_ptr = (memory.absolute_y_addr(ptr.mem_1))
-			} else if ptr.addr_mode == indexed_indirect_type {
-				val_ptr = (memory.indexed_indirect_addr(ptr.mem_1))
-			} else if ptr.addr_mode == indirect_indexed_type {
-				val_ptr = (memory.indirect_indexed_addr(ptr.mem_1))
-			} else if ptr.addr_mode == accumulator_type {
-				val_ptr = &accumulator
-			}
-			switch ptr.op_code {
-			case DEC_cmd:
-				DEC(val_ptr)
-			case BIT_cmd:
-				BIT(val)
-			case INC_cmd:
-				INC(val_ptr)
-			case LDA_cmd:
-				LDA(val)
-			case SBC_cmd:
-				SBC(val)
-			case LDX_cmd:
-				LDX(val)
-			case LDY_cmd:
-				LDY(val)
-			case CPX_cmd:
-				CPX(val)
-			case ORA_cmd:
-				ORA(val)
-			case ASL_cmd:
-				ASL(val_ptr)
-			case SAX_cmd:
-				SAX(val_ptr)
-			case EOR_cmd:
-				EOR(val)
-			case CMP_cmd:
-				CMP(val)
-			case CPY_cmd:
-				CPY(val)
-			case STA_cmd:
-				STA(val_ptr)
-			case AND_cmd:
-				AND(val)
-			case LSR_cmd:
-				//fix me!
-				if ptr.addr_mode == accumulator_type {
-					LSR(&accumulator)
-				} else {
-					LSR(val_ptr)
-				}
-			case ROR_cmd:
-				ROR(val_ptr)
-			case ROL_cmd:
-				ROL(val_ptr)
-			case PLP_cmd:
-				PLP()
-			case PHP_cmd:
-				PHP()
-			case BRK_cmd:
-				cpu_status.break_command = true
-				// dump_contents()
-				// os.Exit(0)
-			case TAX_cmd:
-				TAX()
-			case TAY_cmd:
-				TAY()
-			case TYA_cmd:
-				TYA()
-			case INX_cmd:
-				INX()
-			case INY_cmd:
-				INY()
-			case DEX_cmd:
-				DEX()
-			case DEY_cmd:
-				DEY()
-			case SEI_cmd:
-				SEI()
-			case SED_cmd:
-				SED()
-			case SEC_cmd:
-				SEC()
-			case CLC_cmd:
-				CLC()
-			case CLD_cmd:
-				CLD()
-			case CLI_cmd:
-				CLI()
-			case CLV_cmd:
-				CLV()
-			case NOP_cmd:
-				time.Sleep(5 * time.Microsecond)
-			case PLA_cmd:
-				PLA()
-			case PHA_cmd:
-				PHA()
-			case TXS_cmd:
-				TXS()
-			case TSX_cmd:
-				TSX()
-			case TXA_cmd:
-				TXA()
-			case STX_cmd:
-				STX(val_ptr)
-			case STY_cmd:
-				STY(val_ptr)
-			case ADC_cmd:
-				ADC(val)
-			case RTI_cmd:
-				PLP()
-				stack_pointer++
-				lower := memory.system_stack[stack_pointer]
-				stack_pointer++
-				upper := memory.system_stack[stack_pointer]
-				last_index := upper << 8
-				last_index += lower
-				last_index -= 2
-				var local_ptr = &head
-				for local_ptr.next != nil {
-					if local_ptr.index == last_index {
-						ptr = local_ptr
-						break
-					}
-					local_ptr = local_ptr.next
-				}
-			case BNE_cmd:
-				if !cpu_status.zero_flag {
-					cycles++
-					ptr = break_to(ptr.destination, ptr.mem_1, ptr.addr_in_mem)
-					continue
-				}
-			case BMI_cmd:
-				if cpu_status.negative_flag {
-					cycles++
-					ptr = break_to(ptr.destination, ptr.mem_1, ptr.addr_in_mem)
-					continue
-				}
-			case BEQ_cmd:
-				if cpu_status.zero_flag {
-					cycles++
-					ptr = break_to(ptr.destination, ptr.mem_1, ptr.addr_in_mem)
-					continue
-				}
-			case BVS_cmd:
-				if cpu_status.overflow_flag {
-					cycles++
-					ptr = break_to(ptr.destination, ptr.mem_1, ptr.addr_in_mem)
-					continue
-				}
-			case BVC_cmd:
-				if !cpu_status.overflow_flag {
-					cycles++
-					ptr = break_to(ptr.destination, ptr.mem_1, ptr.addr_in_mem)
-					continue
-				}
-			case BCS_cmd:
-				if cpu_status.carry_flag {
-					cycles++
-					ptr = break_to(ptr.destination, ptr.mem_1, ptr.addr_in_mem)
-					continue
-				}
-			case BCC_cmd:
-				if !cpu_status.carry_flag {
-					cycles++
-					ptr = break_to(ptr.destination, ptr.mem_1, ptr.addr_in_mem)
-					continue
-				}
-			case BPL_cmd:
-				if !cpu_status.negative_flag {
-					cycles++
-					ptr = break_to(ptr.destination, ptr.mem_1, ptr.addr_in_mem)
-					continue
-				}
-			case JMP_cmd:
-				if ptr.addr_mode == indirect_type {
-					if ptr.destination != "" {
-						int_addr := string_to_int(ptr.destination)
-						val_1 := *memory.absolute_addr(int_addr)
-						val_2 := *memory.absolute_addr(int_addr + 1)
-						str_val_1 := strconv.FormatInt(int64(val_1), 16)
-						str_val_2 := strconv.FormatInt(int64(val_2), 16)
-						if val_1 < 10 {
-							str_val_1 = "0" + str_val_1
-						}
-						full_addr := str_val_2 + str_val_1
-						println("implement indirect jmp!", full_addr)
-					} else {
-						println("implement indirect jmp for hex!")
-					}
-				} else if ptr.addr_mode == absolute_type {
-					ptr = break_to(ptr.destination, ptr.mem_1, ptr.mem_1)
-					continue
-				}
-			case JSR_cmd:
-				next := ptr.index + 2
-				lower := next & 0b11111111
-				upper := next >> 8
-				memory.system_stack[stack_pointer] = upper
-				stack_pointer--
-				memory.system_stack[stack_pointer] = lower
-				stack_pointer--
-				ptr = break_to(ptr.destination, ptr.mem_1, ptr.mem_1)
-				continue
-			case RTS_cmd:
-				stack_pointer++
-				lower := memory.system_stack[stack_pointer]
-				stack_pointer++
-				upper := memory.system_stack[stack_pointer]
-				last_index := upper << 8
-				last_index += lower
-				last_index -= 2
-				var local_ptr = &head
-				for local_ptr.next != nil {
-					if local_ptr.index == last_index {
-						ptr = local_ptr
-						break
-					}
-					local_ptr = local_ptr.next
-				}
-			default:
-				print("instruction not implemented!")
-			}
-		}
-		ptr = ptr.next
-		// print_screen()
+func break_to(destination string, mem_dest int, mem_start int) {
+	program_counter = mem_dest
+	//FIX THIS
+	var m256a int = (mem_start - head.index) + 256 - ((mem_start - head.index) % 256)
+	var m256b int = mem_dest + 256 - (mem_dest % 256)
+	if (m256a <= (mem_start-head.index) && (mem_start-head.index) < m256b) || (m256b <= mem_dest && mem_dest < m256a) {
+		cycles += 2
 	}
-}
-
-func break_to(destination string, mem_dest int, mem_start int) *Program_Code {
-	var local_ptr = &head
-	for local_ptr.next != nil {
-		if (local_ptr.destination == destination && local_ptr.code_type == function_definition) || (local_ptr.index == mem_dest && mem_dest != 0) {
-			//FIX THIS
-			var m256a int = (mem_start - head.index) + 256 - ((mem_start - head.index) % 256)
-			var m256b int = mem_dest + 256 - (mem_dest % 256)
-			if (m256a <= (mem_start-head.index) && (mem_start-head.index) < m256b) || (m256b <= mem_dest && mem_dest < m256a) {
-				cycles += 2
-			}
-			return local_ptr
-		}
-		local_ptr = local_ptr.next
-	}
-	return nil
 }
 
 func SAX(mem_addr *int) {
@@ -1598,8 +1285,8 @@ func load(val int, desti *int) {
 	cpu_status.negative_flag = *desti&0b10000000 != 0
 }
 
-func LDA(mem_addr int) {
-	load(mem_addr, &accumulator)
+func LDA(val int) {
+	load(val, &accumulator)
 }
 
 func LDX(mem_addr int) {
@@ -1770,12 +1457,18 @@ func INY() {
 
 func DEC(mem_addr *int) {
 	*mem_addr--
+	if *mem_addr < 0 {
+		*mem_addr += 256
+	}
 	cpu_status.zero_flag = *mem_addr == 0
 	cpu_status.negative_flag = *mem_addr&0b10000000 != 0
 }
 
 func INC(mem_addr *int) {
 	*mem_addr++
+	if *mem_addr > 255 {
+		*mem_addr -= 256
+	}
 	cpu_status.zero_flag = *mem_addr == 0
 	cpu_status.negative_flag = *mem_addr&0b10000000 != 0
 }
@@ -1804,20 +1497,15 @@ func ASL(mem_addr *int) {
 	if *mem_addr > 255 {
 		*mem_addr -= 256
 	}
-	cpu_status.zero_flag = accumulator == 0
+	cpu_status.zero_flag = *mem_addr == 0
 	cpu_status.negative_flag = *mem_addr&0b10000000 != 0
 }
 
 func LSR(addr *int) {
-	cpu_status.carry_flag = accumulator&0b00000001 != 0
-	if addr == nil {
-		accumulator = accumulator >> 1
-		cpu_status.zero_flag = accumulator == 0
-	} else {
-		*addr = *addr >> 1
-		cpu_status.zero_flag = accumulator == 0
-	}
-	cpu_status.negative_flag = accumulator&0b10000000 != 0
+	cpu_status.carry_flag = *addr&0b00000001 != 0
+	*addr = *addr >> 1
+	cpu_status.zero_flag = *addr == 0
+	cpu_status.negative_flag = *addr&0b10000000 != 0
 }
 
 func ROR(addr *int) {
@@ -1832,7 +1520,7 @@ func ROR(addr *int) {
 		*addr -= 256
 	}
 	cpu_status.carry_flag = 0b00000001&temp != 0
-	cpu_status.zero_flag = accumulator == 0
+	cpu_status.zero_flag = *addr == 0
 	cpu_status.negative_flag = 0b10000000&*addr != 0
 }
 
@@ -1848,7 +1536,7 @@ func ROL(addr *int) {
 		*addr -= 256
 	}
 	cpu_status.carry_flag = 0b10000000&temp != 0
-	cpu_status.zero_flag = accumulator == 0
+	cpu_status.zero_flag = *addr == 0
 	cpu_status.negative_flag = 0b10000000&*addr != 0
 }
 
