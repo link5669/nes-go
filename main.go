@@ -23,9 +23,6 @@ func run() {
 	if err != nil {
 		panic(err)
 	}
-	for !win.Closed() {
-		win.Update()
-	}
 	if os.Args[1] == "--input" {
 		if os.Args[2] == "asm" {
 			cpu.read_asm()

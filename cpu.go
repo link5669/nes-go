@@ -465,18 +465,26 @@ func (cpu *CPU) LoadNESFile(path string, ppu *PPU, win *pixelgl.Window) {
 	cpu.program_counter = 0xC000
 	for {
 		imd := imdraw.New(nil)
+		var x float64 = 0
+		var y float64 = 0
 
-		imd.Color = pixel.RGB(1, 0, 0)
-		imd.Push(pixel.V(200, 100))
-		imd.Color = pixel.RGB(0, 1, 0)
-		imd.Push(pixel.V(800, 100))
-		imd.Color = pixel.RGB(0, 0, 1)
-		imd.Push(pixel.V(500, 700))
-		imd.Polygon(0)
+		for mem_ad := 0; mem_ad < 8; mem_ad++ {
+			for ad_bit := 0b10000000; ad_bit > 0; ad_bit = ad_bit >> 1 {
+				curr_color := ppu.chr_rom[mem_ad] & byte(ad_bit)
+				curr_color = curr_color << 4
+				curr_color += ppu.chr_rom[mem_ad+8] & byte(ad_bit)
+				println(curr_color)
+				imd.Color = systemColorPalette[curr_color]
+				imd.Push(pixel.V(x, y))
+				imd.Push(pixel.V(x+1, y+1))
+				imd.Rectangle(1)
+				x += 2
+				y += 2
+			}
+		}
 		if !win.Closed() {
 			win.Clear(colornames.Aliceblue)
 			imd.Draw(win)
-			println("asdj")
 			win.Update()
 		}
 		// if cpu.program_counter == 0xE3BD {

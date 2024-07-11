@@ -71,3 +71,7 @@ func (ppu *PPU) read_data() int {
 	ppu.registers.address += ppu.registers.controller & 0b00000100
 	return temp
 }
+
+func (ppu *PPU) write_data(val int) {
+	
+}
