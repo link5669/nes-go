@@ -2,21 +2,21 @@ package main
 
 import "fmt"
 
-func dump_contents() {
-	fmt.Println("Accumulator:", accumulator)
-	fmt.Println("X Register:", register_x)
-	fmt.Println("Y Register:", register_y)
-	fmt.Println("Stack Pointer:", stack_pointer)
-	fmt.Println("Program Counter:", program_counter)
-	fmt.Println("Cycles:", cycles)
+func dump_contents(cpu *CPU) {
+	fmt.Println("Accumulator:", cpu.accumulator)
+	fmt.Println("X Register:", cpu.register_x)
+	fmt.Println("Y Register:", cpu.register_y)
+	fmt.Println("Stack Pointer:", cpu.stack_pointer)
+	fmt.Println("Program Counter:", cpu.program_counter)
+	fmt.Println("Cycles:", cpu.cycles)
 	fmt.Println("\nFlag Status:")
-	fmt.Println("Program Counter:", cpu_status.carry_flag)
-	fmt.Println("Zero Flag:", cpu_status.zero_flag)
-	fmt.Println("Interrupt Disable:", cpu_status.interrupt_disable)
-	fmt.Println("Decimal Mode:", cpu_status.decimal_mode)
-	fmt.Println("Break Command:", cpu_status.break_command)
-	fmt.Println("Overflow Flag:", cpu_status.overflow_flag)
-	fmt.Println("Negative Flag:", cpu_status.negative_flag)
+	fmt.Println("Program Counter:", cpu.cpu_status.carry_flag)
+	fmt.Println("Zero Flag:", cpu.cpu_status.zero_flag)
+	fmt.Println("Interrupt Disable:", cpu.cpu_status.interrupt_disable)
+	fmt.Println("Decimal Mode:", cpu.cpu_status.decimal_mode)
+	fmt.Println("Break Command:", cpu.cpu_status.break_command)
+	fmt.Println("Overflow Flag:", cpu.cpu_status.overflow_flag)
+	fmt.Println("Negative Flag:", cpu.cpu_status.negative_flag)
 
 	fmt.Println("\nZero Page:")
 	for i := 0; i < 16; i++ {
