@@ -11,6 +11,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gopxl/pixel"
+	"github.com/gopxl/pixel/imdraw"
+	"github.com/gopxl/pixel/pixelgl"
+	"golang.org/x/image/colornames"
 )
 
 type CPU struct {
@@ -392,7 +397,7 @@ type iNESFileHeader struct {
 	_        [7]byte // unused padding
 }
 
-func (cpu *CPU) LoadNESFile(path string, ppu *PPU) {
+func (cpu *CPU) LoadNESFile(path string, ppu *PPU, win *pixelgl.Window) {
 	// open file
 	file, err := os.Open(path)
 	if err != nil {
@@ -459,14 +464,29 @@ func (cpu *CPU) LoadNESFile(path string, ppu *PPU) {
 	cpu.cpu_status.interrupt_disable = true
 	cpu.program_counter = 0xC000
 	for {
-		if cpu.program_counter == 0xE3BD {
-			dump_contents(cpu)
+		imd := imdraw.New(nil)
+
+		imd.Color = pixel.RGB(1, 0, 0)
+		imd.Push(pixel.V(200, 100))
+		imd.Color = pixel.RGB(0, 1, 0)
+		imd.Push(pixel.V(800, 100))
+		imd.Color = pixel.RGB(0, 0, 1)
+		imd.Push(pixel.V(500, 700))
+		imd.Polygon(0)
+		if !win.Closed() {
+			win.Clear(colornames.Aliceblue)
+			imd.Draw(win)
+			println("asdj")
+			win.Update()
 		}
-		index := fmt.Sprintf("%x", cpu.program_counter)
+		// if cpu.program_counter == 0xE3BD {
+		// 	dump_contents(cpu)
+		// }
+		// index := fmt.Sprintf("%x", cpu.program_counter)
 		opcode := *memory.absolute_addr(cpu.program_counter, cpu)
-		if run_tests(fmt.Sprint(strings.ToUpper(index), " ", "opcode", " ", "mem", " A:", strings.ToUpper(fmt.Sprintf("%x", cpu.accumulator)), " X:", strings.ToUpper(fmt.Sprintf("%x", cpu.register_x)), " Y:", strings.ToUpper(fmt.Sprintf("%x", cpu.register_y)), " P:", strings.ToUpper(fmt.Sprintf("%x", get_flag_sum())), " SP:", strings.ToUpper(fmt.Sprintf("%x", cpu.stack_pointer)), " CYC:", cpu.cycles), i) {
-			break
-		}
+		// if run_tests(fmt.Sprint(strings.ToUpper(index), " ", "opcode", " ", "mem", " A:", strings.ToUpper(fmt.Sprintf("%x", cpu.accumulator)), " X:", strings.ToUpper(fmt.Sprintf("%x", cpu.register_x)), " Y:", strings.ToUpper(fmt.Sprintf("%x", cpu.register_y)), " P:", strings.ToUpper(fmt.Sprintf("%x", get_flag_sum())), " SP:", strings.ToUpper(fmt.Sprintf("%x", cpu.stack_pointer)), " CYC:", cpu.cycles), i) {
+		// 	break
+		// }
 		i++
 		// ptr.index = program_counter
 
@@ -1271,6 +1291,8 @@ func SAX(mem_addr *int) {
 func load(val int, desti *int) {
 	if val == 0x2007 {
 		*desti = ppu.read_data()
+	} else if val == 0x2002 {
+		*desti = ppu.read_status()
 	} else {
 		*desti = val
 	}
@@ -1293,6 +1315,8 @@ func LDY(mem_addr int) {
 func STA(val *int) {
 	if *val == 0x2006 {
 		ppu.write_addr(cpu.accumulator)
+	} else if *val == 0x2001 {
+		ppu.write_mask(cpu.accumulator)
 	} else {
 		*val = cpu.accumulator
 	}
