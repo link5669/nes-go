@@ -405,6 +405,7 @@ func (cpu *CPU) LoadNESFile(path string, ppu *PPU, win *pixelgl.Window) {
 	}
 	defer file.Close()
 
+	//was this the fogelman code??
 	// read file header
 	header := iNESFileHeader{}
 	if err := binary.Read(file, binary.LittleEndian, &header); err != nil {
